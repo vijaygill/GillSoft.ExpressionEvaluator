@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GillSoft.ExpressionEvaluator", "GillSoft.ExpressionEvaluator\GillSoft.ExpressionEvaluator.csproj", "{07B52339-4B19-48B0-B132-25FF016ADDD3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GillSoft.ExpressionEvaluator.Demo", "GillSoft.ExpressionEvaluator.Demo\GillSoft.ExpressionEvaluator.Demo.csproj", "{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{07B52339-4B19-48B0-B132-25FF016ADDD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07B52339-4B19-48B0-B132-25FF016ADDD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07B52339-4B19-48B0-B132-25FF016ADDD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07B52339-4B19-48B0-B132-25FF016ADDD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
