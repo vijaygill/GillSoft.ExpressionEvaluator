@@ -50,6 +50,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
                                 case "klm": { a.Value = 15; break; }
                                 case "abc.def": { a.Value = "Some value with Caps"; break; }
                                 case "#abc.def#": { a.Value = "Dublin, Ireland"; break; }
+                                case "v1": { a.Value = "Dublin, Ireland"; break; }
                                 //case "z": { a.Value = 415; break; }
                                 default:
                                     break;
