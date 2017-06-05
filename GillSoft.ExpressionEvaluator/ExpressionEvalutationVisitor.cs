@@ -83,6 +83,16 @@ namespace GillSoft.ExpressionEvaluator
             {
                 switch (context.value.Type)
                 {
+                    case ExpressionParser.STRING:
+                        {
+                            var res = context.value.Text;
+                            if(!string.IsNullOrWhiteSpace(res))
+                            {
+                                res = res.Replace("'", string.Empty)
+                                    .Replace("\"", string.Empty);
+                            }
+                            return res;
+                        }
                     case ExpressionParser.CONST:
                         {
                             // this is a constant type, so just return the text/value of proper type

@@ -6,12 +6,16 @@ expression : sign = ('-' | '+') expression
 			| left = expression op = ( MULT | DIV ) right = expression
 			| left = expression op = ( ADD | SUB ) right = expression
 			| function
-			| value = ( IDENT  | CONST )
+			| value = ( IDENT  | CONST | STRING )
 			;
 
 subExpresion : LPAREN expression RPAREN ;
 
 function : name = IDENT LPAREN  paramFirst = expression ( ',' paramRest += expression )* RPAREN ;
+
+STRING  : SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING;
+SINGLE_QUOTED_STRING: '\'' (~('\'' | '\r' | '\n') ) * '\'';
+DOUBLE_QUOTED_STRING: '"' (~('"' | '\r' | '\n') ) * '"';
 
 CONST	: INTEGER | DECIMAL;
 
