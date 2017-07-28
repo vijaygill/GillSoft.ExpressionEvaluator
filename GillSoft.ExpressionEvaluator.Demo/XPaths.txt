@@ -1,0 +1,3 @@
+﻿#/bookstore/book/title
+/a/ns0:b/ns0:c[@ns1:name='some name']/d
+/bookstore/ns0:book[@ns1:name='some value']/title
