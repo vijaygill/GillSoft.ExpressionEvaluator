@@ -21,8 +21,10 @@ a + b + c + klm + 10
 lower(abc.def)
 upper(#abc.def#)
 upper(v1)
-upper("Hello World")
-lower("Hello World")
+upper('Hello World')
+lower('Hello World')
+'hello' + ' ' + 'world'
+"hello" + ' ' + "world"
 true && true
 true && false
 false && true

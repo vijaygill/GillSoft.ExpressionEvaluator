@@ -4,20 +4,22 @@ expression : mathematicalExpression
 			| booleanExprerssion
 			;
 
-mathematicalExpression :sign = ('-' | '+') expr = mathematicalExpression
+mathematicalExpression :sign = ( MINUS | PLUS) expr = mathematicalExpression
 			| subExpression
 			| left = mathematicalExpression op = POW right = mathematicalExpression
 			| left = mathematicalExpression op = ( MULT | DIV ) right = mathematicalExpression
-			| left = mathematicalExpression op = ( ADD | SUB ) right = mathematicalExpression
+			| left = mathematicalExpression op = ( PLUS | MINUS ) right = mathematicalExpression
 			| functionValue = function
+			| str = stringValue
 			| value = simpleValue
 			;
 
-booleanExprerssion: sign = '!' expr = booleanExprerssion
+booleanExprerssion: sign = NOT expr = booleanExprerssion
 			| subExpression
 			| left = booleanExprerssion op = AND right = booleanExprerssion
 			| left = booleanExprerssion op = OR right = booleanExprerssion
 			| functionValue = function
+			| str = stringValue
 			| value = simpleValue
 			;
 
@@ -25,11 +27,12 @@ subExpression : LPAREN (mathExpr = mathematicalExpression | boolExpr = booleanEx
 
 function : name = IDENT LPAREN  (paramFirst = expression ( ',' paramRest += expression )*)? RPAREN ;
 
-simpleValue: value = ( IDENT  | CONST | TRUE | FALSE | STRING );
+stringValue : SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING;
 
-STRING  : SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING;
 SINGLE_QUOTED_STRING: '\'' (~('\'' | '\r' | '\n') ) * '\'';
 DOUBLE_QUOTED_STRING: '"' (~('"' | '\r' | '\n') ) * '"';
+
+simpleValue: value = ( IDENT  | CONST | TRUE | FALSE );
 
 CONST	: INTEGER | DECIMAL;
 
@@ -48,11 +51,12 @@ RPAREN : ')';
 
 MULT : '*';
 DIV  : '/';
-ADD  : '+';
-SUB  : '-';
+PLUS  : '+';
+MINUS  : '-';
 POW  : '^';
 
 AND  : '&&';
 OR   : '||';
+NOT  : '!';
 
 WS : [ \r\t\u000C\n]+ -> skip ;

@@ -63,6 +63,12 @@ public interface IExpressionVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunction([NotNull] ExpressionParser.FunctionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ExpressionParser.stringValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStringValue([NotNull] ExpressionParser.StringValueContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ExpressionParser.simpleValue"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

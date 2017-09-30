@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 using Antlr4.Runtime.Tree;
+using System.Text.RegularExpressions;
 
 namespace GillSoft.ExpressionEvaluator
 {
@@ -14,6 +15,12 @@ namespace GillSoft.ExpressionEvaluator
     {
         private readonly Action<FunctionArgs> handleFunction;
         private readonly Action<VariableArgs> handleVariable;
+
+
+        private readonly string minus = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.MINUS).Replace("'", string.Empty);
+        private readonly string plus = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.PLUS).Replace("'", string.Empty);
+        private readonly string not = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.NOT).Replace("'", string.Empty);
+        private readonly string[] quotes = new[] { "'", "\"" };
 
         public ExpressionEvalutationVisitor(Action<FunctionArgs> handleFunction,
             Action<VariableArgs> handleVariable)
@@ -40,6 +47,20 @@ namespace GillSoft.ExpressionEvaluator
             return base.VisitSubExpression(context);
         }
 
+        public override object VisitStringValue([NotNull] ExpressionParser.StringValueContext context)
+        {
+            var res = "" + context.GetText();
+            if (quotes.Any(q => res.StartsWith(q)))
+            {
+                res = res.Substring(1);
+            }
+            if (quotes.Any(q => res.EndsWith(q)))
+            {
+                res = res.Substring(0, res.Length - 1);
+            }
+            return res;
+        }
+
         public override object VisitSimpleValue([NotNull] ExpressionParser.SimpleValueContext context)
         {
             var res = string.Empty;
@@ -49,16 +70,6 @@ namespace GillSoft.ExpressionEvaluator
                 case ExpressionParser.FALSE:
                     {
                         return context.value.Text;
-                    }
-                case ExpressionParser.STRING:
-                    {
-                        res = context.value.Text;
-                        if (!string.IsNullOrWhiteSpace(res))
-                        {
-                            res = res.Replace("'", string.Empty)
-                                .Replace("\"", string.Empty);
-                        }
-                        return res;
                     }
                 case ExpressionParser.CONST:
                     {
@@ -101,7 +112,7 @@ namespace GillSoft.ExpressionEvaluator
             if (context.sign != null)
             {
                 var res = "" + VisitMathematicalExpression(context.mathematicalExpression()[0]);
-                var mult = context.sign.Text.Equals("-") ? -1 : 1;
+                var mult = context.sign.Text.Equals(minus) ? -1 : 1;
 
                 var resNum = default(double);
                 if (!double.TryParse(res, out resNum))
@@ -127,7 +138,7 @@ namespace GillSoft.ExpressionEvaluator
 
                 switch (context.op.Type)
                 {
-                    case ExpressionParser.ADD:
+                    case ExpressionParser.PLUS:
                         {
                             if (isNumeric)
                             {
@@ -138,7 +149,7 @@ namespace GillSoft.ExpressionEvaluator
                                 return left + right;
                             }
                         }
-                    case ExpressionParser.SUB:
+                    case ExpressionParser.MINUS:
                         {
                             if (isNumeric)
                             {
@@ -182,18 +193,9 @@ namespace GillSoft.ExpressionEvaluator
                                 throw new Exception("Cannot apply operand " + ExpressionParser.DefaultVocabulary.GetLiteralName(context.op.Type) + " on strings");
                             }
                         }
-                    default:
-                        {
-                            break;
-                        }
                 }
             }
             return base.VisitMathematicalExpression(context);
-        }
-
-        public override object VisitTerminal(ITerminalNode node)
-        {
-            return base.VisitTerminal(node);
         }
 
         public override object VisitFunction([NotNull] ExpressionParser.FunctionContext context)

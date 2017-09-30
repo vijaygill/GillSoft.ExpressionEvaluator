@@ -51,6 +51,12 @@ namespace GillSoft.ExpressionEvaluator.Tests
 
         };
 
+        private Dictionary<string, string> testCasesString = new Dictionary<string, string>
+        {
+            { "'Hello' + ' ' + 'World'", "Hello World"},
+            { "\"Hello\" + ' ' + \"World\"", "Hello World"},
+        };
+
         [TestMethod]
         public void TestNumericExpressions()
         {
@@ -65,6 +71,22 @@ namespace GillSoft.ExpressionEvaluator.Tests
                 var res = expr.Evaluate(testCase.Key);
                 var resDecimal = (double)res;
                 Assert.AreEqual(testCase.Value, resDecimal, "Testcase failed for expression: " + testCase.Key);
+            }
+        }
+
+        [TestMethod]
+        public void TestStringExpressions()
+        {
+            //arrange
+            var expr = new Expression();
+
+            //act
+
+            //assert
+            foreach (var testCase in testCasesString)
+            {
+                var res = "" + expr.Evaluate(testCase.Key);
+                Assert.AreEqual(testCase.Value, res, "Testcase failed for expression: " + testCase.Key);
             }
         }
 
