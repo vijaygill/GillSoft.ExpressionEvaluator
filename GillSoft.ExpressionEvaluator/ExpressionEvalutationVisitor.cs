@@ -27,111 +27,97 @@ namespace GillSoft.ExpressionEvaluator
             { "pi", 22.0 / 7.0},
         };
 
-        private Dictionary<string, Func<List<FunctionParameter>, object>> predefinedFunctions = new Dictionary<string, Func<List<FunctionParameter>, object>>
+        public override object VisitSubExpression([NotNull] ExpressionParser.SubExpressionContext context)
         {
-            {  "lower", (a) => { return ("" + a[0].Value).ToLower(CultureInfo.CurrentCulture); } },
-            {  "upper", (a) => { return ("" + a[0].Value).ToUpper(CultureInfo.CurrentCulture); } },
-
-
-            {  "abs", (a) => { return  Math.Abs(Convert.ToDouble(a[0].Value)); } },
-            {  "cos", (a) => { return  Math.Cos(Convert.ToDouble(a[0].Value)); } },
-            {  "max", (a) => { return  a.Select(o => Convert.ToDouble(o.Value)).Max(); } },
-            {  "pow", (a) => { return  Math.Pow(Convert.ToDouble(a[0].Value), Convert.ToDouble(a[1].Value)); } },
-            {  "sin", (a) => { return  Math.Sin(Convert.ToDouble(a[0].Value)); } },
-            {  "sqrt", (a) => { return  Math.Sqrt(Convert.ToDouble(a[0].Value)); } },
-            {  "tan", (a) => { return  Math.Tan(Convert.ToDouble(a[0].Value)); } },
-        };
-
-        private static object ProperTypeValue(object value, IToken sign)
-        {
-            if (value == null)
+            if (context.mathExpr != null)
             {
-                return value;
+                return VisitMathematicalExpression(context.mathExpr);
             }
-
-            var signText = sign != null ? sign.Text : string.Empty;
-
-            var mult = "-".Equals(signText) ? -1 : 1;
-
-            var numeric = default(double);
-
-            var isNumeric = double.TryParse("" + value, out numeric);
-
-            if (isNumeric)
+            if (context.boolExpr != null)
             {
-                return mult * numeric;
+                return VisitBooleanExprerssion(context.boolExpr);
             }
-
-            return signText + value;
+            return base.VisitSubExpression(context);
         }
 
-        public override object VisitSubExpresion([NotNull] ExpressionParser.SubExpresionContext context)
+        public override object VisitSimpleValue([NotNull] ExpressionParser.SimpleValueContext context)
         {
-            return VisitExpression(context.expression());
+            var res = string.Empty;
+            switch (context.value.Type)
+            {
+                case ExpressionParser.TRUE:
+                case ExpressionParser.FALSE:
+                    {
+                        return context.value.Text;
+                    }
+                case ExpressionParser.STRING:
+                    {
+                        res = context.value.Text;
+                        if (!string.IsNullOrWhiteSpace(res))
+                        {
+                            res = res.Replace("'", string.Empty)
+                                .Replace("\"", string.Empty);
+                        }
+                        return res;
+                    }
+                case ExpressionParser.CONST:
+                    {
+                        // this is a constant type, so just return the text/value of proper type
+                        return context.value.Text;
+                    }
+                case ExpressionParser.IDENT:
+                    {
+                        var name = context.value.Text;
+                        var key = name.ToLower();
+                        if (predefinedConstants.ContainsKey(key))
+                        {
+                            return predefinedConstants[key];
+                        }
+
+                        // let user code handle the resolution of the variable
+
+                        var handler = handleVariable;
+                        if (handler != null)
+                        {
+                            var e = new VariableArgs(name, context.value.Text);
+                            handler(e);
+                            if (e.HasValue)
+                            {
+                                return e.Value;
+                            }
+                            throw Expression.CreateException(context.value, "Variable not resolved");
+                        }
+                        else
+                        {
+                            throw Expression.CreateException(context.value, "No handler provided to resolve variable");
+                        }
+                    }
+            }
+            return base.VisitSimpleValue(context);
         }
 
-        public override object VisitExpression([NotNull] ExpressionParser.ExpressionContext context)
+        public override object VisitMathematicalExpression([NotNull] ExpressionParser.MathematicalExpressionContext context)
         {
             if (context.sign != null)
             {
-                var res = VisitExpression(context.expression()[0]);
+                var res = "" + VisitMathematicalExpression(context.mathematicalExpression()[0]);
+                var mult = context.sign.Text.Equals("-") ? -1 : 1;
 
-                return ProperTypeValue(res, context.sign);
-            }
-
-            if (context.value != null)
-            {
-                switch (context.value.Type)
+                var resNum = default(double);
+                if (!double.TryParse(res, out resNum))
                 {
-                    case ExpressionParser.STRING:
-                        {
-                            var res = context.value.Text;
-                            if(!string.IsNullOrWhiteSpace(res))
-                            {
-                                res = res.Replace("'", string.Empty)
-                                    .Replace("\"", string.Empty);
-                            }
-                            return res;
-                        }
-                    case ExpressionParser.CONST:
-                        {
-                            // this is a constant type, so just return the text/value of proper type
-                            return ProperTypeValue(context.value.Text, context.sign);
-                        }
-                    case ExpressionParser.IDENT:
-                        {
-                            var name = context.value.Text;
-                            var key = name.ToLower();
-                            if (predefinedConstants.ContainsKey(key))
-                            {
-                                return predefinedConstants[key];
-                            }
-
-                            // let user code handle the resolution of the variable
-
-                            var handler = handleVariable;
-                            if (handler != null)
-                            {
-                                var e = new VariableArgs(name, context.value.Text);
-                                handler(e);
-                                if (e.HasValue)
-                                {
-                                    return ProperTypeValue(e.Value, context.sign);
-                                }
-                                throw Expression.CreateException(context.value, "Variable not resolved");
-                            }
-                            else
-                            {
-                                throw Expression.CreateException(context.value, "No handler provided to resolve variable");
-                            }
-                        }
+                    throw new Exception("Cannot convert to numeric: " + res);
                 }
+                return resNum * mult;
             }
-
+            if (context.functionValue != null)
+            {
+                return VisitFunction(context.functionValue);
+            }
             if (context.op != null)
             {
-                var left = "" + VisitExpression(context.left);
-                var right = "" + VisitExpression(context.right);
+                var left = "" + VisitMathematicalExpression(context.left);
+                var right = "" + VisitMathematicalExpression(context.right);
 
                 var leftNumeric = default(double);
                 var rightNumeric = default(double);
@@ -202,7 +188,7 @@ namespace GillSoft.ExpressionEvaluator
                         }
                 }
             }
-            return base.VisitExpression(context);
+            return base.VisitMathematicalExpression(context);
         }
 
         public override object VisitTerminal(ITerminalNode node)
@@ -229,25 +215,68 @@ namespace GillSoft.ExpressionEvaluator
                 }
             }
 
-            var key = e.Name.ToLower();
-            if (predefinedFunctions.ContainsKey(key))
+            var handler = handleFunction;
+            if (handler != null)
             {
-                var func = predefinedFunctions[key];
-                e.Result = func(e.Params);
-            }
-            else
-            {
-                var handler = handleFunction;
-                if (handler != null)
+                handler(e);
+                if (!e.HasResult)
                 {
-                    handler(e);
-                    if (!e.HasResult)
-                    {
-                        throw new Exception("Unhandled function: " + e.Name);
-                    }
+                    throw new Exception("Unhandled function: " + e.Name);
                 }
             }
-            return ProperTypeValue(e.Result, null);
+            return e.Result;
+        }
+
+        public override object VisitBooleanExprerssion([NotNull] ExpressionParser.BooleanExprerssionContext context)
+        {
+            if (context.value != null)
+            {
+                return VisitSimpleValue(context.value);
+            }
+            if (context.sign != null)
+            {
+                var res = "" + VisitBooleanExprerssion(context.expr);
+                var resBool = default(bool);
+                if (!bool.TryParse(res, out resBool))
+                {
+                    throw new Exception("Cannot convert to boolean: " + res);
+                }
+                return !resBool;
+            }
+            if (context.functionValue != null)
+            {
+                return VisitFunction(context.functionValue);
+            }
+            if (context.left != null && context.right != null)
+            {
+                var left = "" + VisitBooleanExprerssion(context.left);
+                var right = "" + VisitBooleanExprerssion(context.right);
+
+                var leftBool = default(bool);
+                var rightBool = default(bool);
+
+                if (!bool.TryParse(left, out leftBool))
+                {
+                    throw new Exception("Cannot convert to boolean: " + left);
+                }
+                if (!bool.TryParse(right, out rightBool))
+                {
+                    throw new Exception("Cannot convert to boolean: " + right);
+                };
+
+                switch (context.op.Type)
+                {
+                    case ExpressionParser.AND:
+                        {
+                            return leftBool && rightBool;
+                        }
+                    case ExpressionParser.OR:
+                        {
+                            return leftBool || rightBool;
+                        }
+                }
+            }
+            return base.VisitBooleanExprerssion(context);
         }
     }
 }

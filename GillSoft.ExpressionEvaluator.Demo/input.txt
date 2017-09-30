@@ -18,14 +18,28 @@ pi * r ^ 2
 3 ^ 4
 45 ^ 0
 a + b + c + klm + 10
-sin(30)
--sqrt(45.5)
-sqrt(pow(3,2) + pow(4,2))
-sqrt(3 ^ 2  + 4 ^ 2 )
 lower(abc.def)
 upper(#abc.def#)
 upper(v1)
-max(10, 20, 30)
--max(10, 20, 30)
 upper("Hello World")
 lower("Hello World")
+true && true
+true && false
+false && true
+false && false
+true || true
+true || false
+false || true
+false || false
+false || !false
+true && !false
+true && !true
+true && (!true || true)
+false || (!false || false)
+!(false || (!false || false))
+true && FuncThatReturnsTrue()
+true && FuncThatReturnsFalse()
+true && FuncThatReturnsNotOfParam(false)
+true && FuncThatReturnsNotOfParam(true)
+true && FuncThatReturnsNotOfParam(boolFalseVar)
+true && FuncThatReturnsNotOfParam(boolTrueVar)

@@ -14,8 +14,8 @@ namespace GillSoft.ExpressionEvaluator.Demo
         {
             try
             {
-                //CheckExpressionParser();
-                CheckXPathParser();
+                CheckExpressionParser();
+                //CheckXPathParser();
             }
             catch (Exception ex)
             {
@@ -101,6 +101,27 @@ namespace GillSoft.ExpressionEvaluator.Demo
                         {
                             a.Result = ("" + a.Params[0].Value).ToLower();
                         }
+                        if (a.Name == "upper")
+                        {
+                            a.Result = ("" + a.Params[0].Value).ToUpper();
+                        }
+                        if (a.Name == "max")
+                        {
+                            a.Result = a.Params.Select(p => decimal.Parse("" + p.Value)).Max(p => p);
+                        }
+                        if (a.Name == "FuncThatReturnsTrue")
+                        {
+                            a.Result = true;
+                        }
+                        if (a.Name == "FuncThatReturnsFalse")
+                        {
+                            a.Result = false;
+                        }
+                        if (a.Name == "FuncThatReturnsNotOfParam")
+                        {
+                            var paramValue = "true".Equals("" + a.Params[0].Value, StringComparison.OrdinalIgnoreCase) ? true : false;
+                            a.Result = !paramValue;
+                        }
                     };
 
                     expr.HandleVariable += (sender, a) =>
@@ -121,6 +142,14 @@ namespace GillSoft.ExpressionEvaluator.Demo
                             //case "z": { a.Value = 415; break; }
                             default:
                                 break;
+                        }
+                        if ("boolFalseVar" == a.Name)
+                        {
+                            a.Value = false;
+                        }
+                        if ("boolTrueVar" == a.Name)
+                        {
+                            a.Value = true;
                         }
                     };
 

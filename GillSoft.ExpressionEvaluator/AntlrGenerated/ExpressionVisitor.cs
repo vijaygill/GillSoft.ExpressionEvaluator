@@ -39,16 +39,34 @@ public interface IExpressionVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpression([NotNull] ExpressionParser.ExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="ExpressionParser.subExpresion"/>.
+	/// Visit a parse tree produced by <see cref="ExpressionParser.mathematicalExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSubExpresion([NotNull] ExpressionParser.SubExpresionContext context);
+	Result VisitMathematicalExpression([NotNull] ExpressionParser.MathematicalExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ExpressionParser.booleanExprerssion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBooleanExprerssion([NotNull] ExpressionParser.BooleanExprerssionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ExpressionParser.subExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSubExpression([NotNull] ExpressionParser.SubExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ExpressionParser.function"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitFunction([NotNull] ExpressionParser.FunctionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ExpressionParser.simpleValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleValue([NotNull] ExpressionParser.SimpleValueContext context);
 }
 } // namespace GillSoft.ExpressionEvaluator

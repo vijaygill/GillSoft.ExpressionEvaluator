@@ -1,62 +1,95 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace GillSoft.ExpressionEvaluator.Tests
 {
     [TestClass]
     public class ExpressionUnitTest
     {
+        private Dictionary<string, bool> testCasesBoolean = new Dictionary<string, bool>
+        {
+            {"true || true", true},
+            {"true || false", true},
+            {"false || true", true},
+            {"false || false", false},
+            {"true && true", true},
+            {"true && false", false},
+            {"false && true", false},
+            {"false && false", false},
+            {"true && (false || true)", true},
+            {"true && !(false || true)", false},
+
+            {"true && !(false || NotFunc(true))", true},
+        };
+
+        private Dictionary<string, double> testCasesNumeric = new Dictionary<string, double>
+        {
+            {"10 + 15", 25},
+            {"10 + -15", -5},
+            {"-10 + 15", 5},
+            {"-10 + -15", -25},
+
+            {"10 - 15", -5},
+            {"10 - -15", 25},
+            {"-10 - 15", -25},
+            {"-10 - -15", 5},
+
+            {"10 * 15", 150},
+            {"10 * -15", -150},
+            {"-10 * 15", -150},
+            {"-10 * -15", 150},
+
+            {"20 / 5", 4},
+            {"20 / -5", -4},
+            {"-20 / 5", -4},
+            {"-20 / -5", 4},
+
+            { "25 * 4 / 2 + 10 - 4 ", 56},
+
+            { "25 * 4 / (2 + 10 - 8) ", 25},
+
+        };
+
         [TestMethod]
-        public void AddPositiveToPositive()
+        public void TestNumericExpressions()
         {
             //arrange
             var expr = new Expression();
 
             //act
-            var result = expr.Evaluate("10 + 15");
 
             //assert
-            Assert.AreEqual((double)25, result);
+            foreach (var testCase in testCasesNumeric)
+            {
+                var res = expr.Evaluate(testCase.Key);
+                var resDecimal = (double)res;
+                Assert.AreEqual(testCase.Value, resDecimal, "Testcase failed for expression: " + testCase.Key);
+            }
         }
 
         [TestMethod]
-        public void AddPositiveToNegative()
+        public void TestBooleanExpressions()
         {
             //arrange
             var expr = new Expression();
+            expr.HandleFunction += (sender, a) =>
+            {
+                if ("NotFunc".Equals(a.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    var paramValue = "true".Equals("" + a.Params[0].Value, StringComparison.OrdinalIgnoreCase) ? true : false;
+                    a.Result = !paramValue;
+                }
+            };
 
             //act
-            var result = expr.Evaluate("10 + -15");
 
             //assert
-            Assert.AreEqual((double)-5, result);
+            foreach (var testCase in testCasesBoolean)
+            {
+                var res = (bool)expr.Evaluate(testCase.Key);
+                Assert.AreEqual(testCase.Value, res, "Testcase failed for expression: " + testCase.Key);
+            }
         }
-
-        [TestMethod]
-        public void NegativeToNegative()
-        {
-            //arrange
-            var expr = new Expression();
-
-            //act
-            var result = expr.Evaluate("-10 + -15");
-
-            //assert
-            Assert.AreEqual((double)-25, result);
-        }
-
-        [TestMethod]
-        public void NegativeToPositive()
-        {
-            //arrange
-            var expr = new Expression();
-
-            //act
-            var result = expr.Evaluate("-10 + 15");
-
-            //assert
-            Assert.AreEqual((double)5, result);
-        }
-
     }
 }

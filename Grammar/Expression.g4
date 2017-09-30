@@ -1,17 +1,31 @@
 grammar Expression;
 
-expression : sign = ('-' | '+') expression
-			| subExpresion
-			| left = expression op = POW right = expression
-			| left = expression op = ( MULT | DIV ) right = expression
-			| left = expression op = ( ADD | SUB ) right = expression
-			| function
-			| value = ( IDENT  | CONST | STRING )
+expression : mathematicalExpression
+			| booleanExprerssion
 			;
 
-subExpresion : LPAREN expression RPAREN ;
+mathematicalExpression :sign = ('-' | '+') expr = mathematicalExpression
+			| subExpression
+			| left = mathematicalExpression op = POW right = mathematicalExpression
+			| left = mathematicalExpression op = ( MULT | DIV ) right = mathematicalExpression
+			| left = mathematicalExpression op = ( ADD | SUB ) right = mathematicalExpression
+			| functionValue = function
+			| value = simpleValue
+			;
 
-function : name = IDENT LPAREN  paramFirst = expression ( ',' paramRest += expression )* RPAREN ;
+booleanExprerssion: sign = '!' expr = booleanExprerssion
+			| subExpression
+			| left = booleanExprerssion op = AND right = booleanExprerssion
+			| left = booleanExprerssion op = OR right = booleanExprerssion
+			| functionValue = function
+			| value = simpleValue
+			;
+
+subExpression : LPAREN (mathExpr = mathematicalExpression | boolExpr = booleanExprerssion) RPAREN ;
+
+function : name = IDENT LPAREN  (paramFirst = expression ( ',' paramRest += expression )*)? RPAREN ;
+
+simpleValue: value = ( IDENT  | CONST | TRUE | FALSE | STRING );
 
 STRING  : SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING;
 SINGLE_QUOTED_STRING: '\'' (~('\'' | '\r' | '\n') ) * '\'';
@@ -23,6 +37,10 @@ INTEGER : [0-9]+;
 
 DECIMAL : [0-9]+'.'[0-9]+;
 
+TRUE    : [Tt][Rr][Uu][Ee];
+FALSE   : [Ff][Aa][Ll][Ss][Ee];
+
+
 IDENT : [_#A-Za-z][_#.A-Za-z0-9]*;
 
 LPAREN : '(';
@@ -33,5 +51,8 @@ DIV  : '/';
 ADD  : '+';
 SUB  : '-';
 POW  : '^';
+
+AND  : '&&';
+OR   : '||';
 
 WS : [ \r\t\u000C\n]+ -> skip ;
