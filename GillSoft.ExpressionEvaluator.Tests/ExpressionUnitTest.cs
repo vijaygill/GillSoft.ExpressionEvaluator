@@ -55,6 +55,8 @@ namespace GillSoft.ExpressionEvaluator.Tests
         {
             { "'Hello' + ' ' + 'World'", "Hello World"},
             { "\"Hello\" + ' ' + \"World\"", "Hello World"},
+            { "'Hello' + ' ' + audience()", "Hello world"},
+            { "'Hello' + ' ' + upper(audience())", "Hello WORLD"},
         };
 
         [TestMethod]
@@ -79,6 +81,19 @@ namespace GillSoft.ExpressionEvaluator.Tests
         {
             //arrange
             var expr = new Expression();
+            expr.HandleFunction += (sender, a) =>
+            {
+                if ("audience".Equals(a.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    a.Result = "world";
+                }
+                if ("upper".Equals(a.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    a.Result = ("" + a.Params[0].Value).ToUpper();
+                }
+            };
+
+
 
             //act
 
