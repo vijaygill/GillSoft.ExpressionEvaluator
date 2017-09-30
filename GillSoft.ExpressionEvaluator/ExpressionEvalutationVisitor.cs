@@ -31,7 +31,7 @@ namespace GillSoft.ExpressionEvaluator
 
         private Dictionary<string, object> predefinedConstants = new Dictionary<string, object>
         {
-            { "pi", 22.0 / 7.0},
+            { "pi", (double)22.0 / 7.0},
         };
 
         public override object VisitSubExpression([NotNull] ExpressionParser.SubExpressionContext context)
@@ -120,10 +120,6 @@ namespace GillSoft.ExpressionEvaluator
                     throw new Exception("Cannot convert to numeric: " + res);
                 }
                 return resNum * mult;
-            }
-            if (context.functionValue != null)
-            {
-                return VisitFunction(context.functionValue);
             }
             if (context.op != null)
             {
@@ -244,10 +240,6 @@ namespace GillSoft.ExpressionEvaluator
                     throw new Exception("Cannot convert to boolean: " + res);
                 }
                 return !resBool;
-            }
-            if (context.functionValue != null)
-            {
-                return VisitFunction(context.functionValue);
             }
             if (context.left != null && context.right != null)
             {
