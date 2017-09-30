@@ -11,6 +11,8 @@ java -jar ..\tools\antlr-4.6-complete.jar ..\Grammar\xpath.g4 -no-listener -Dlan
 move "%src_path%*.cs" "%dest_path%"
 del "%src_path%*.tokens"
 
+rd /s /q %src_path%\.antlr
+
 endlocal
 
 pause
