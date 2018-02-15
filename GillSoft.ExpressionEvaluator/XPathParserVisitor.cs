@@ -15,11 +15,18 @@ namespace GillSoft.ExpressionEvaluator
     {
         public string Prefix { get; private set; }
         public string Name { get; private set; }
+        public string InnerText { get; set; }
 
-        public ElementArgs(string prefix, string name)
+        public ElementArgs(string prefix, string name, string innerText)
         {
             this.Prefix = prefix;
             this.Name = name;
+            this.InnerText = innerText;
+        }
+
+        public ElementArgs(string prefix, string name)
+            : this(prefix, name, string.Empty)
+        {
         }
     }
 
@@ -89,14 +96,33 @@ namespace GillSoft.ExpressionEvaluator
             }
         }
 
+        public override string VisitFunction([NotNull] xpathParser.FunctionContext context)
+        {
+            return base.VisitFunction(context);
+        }
+
         public override string VisitFilter([NotNull] xpathParser.FilterContext context)
         {
-            var handler = OnAttribute;
-            if (handler != null)
+            if (context.attr != null)
             {
-                var e = new AttributeArgs(context.attr.ns.GetTextSafely(), context.attr.name.GetTextSafely(), context.value.GetTextSafely());
-                RaiseNamespacePriefix(e.Prefix);
-                handler(this, e);
+                var handler = OnAttribute;
+                if (handler != null)
+                {
+                    var e = new AttributeArgs(context.attr.ns.GetTextSafely(),
+                        context.attr.name.GetTextSafely(), context.value.GetTextSafely().DeQuote());
+                    handler(this, e);
+                    RaiseNamespacePriefix(e.Prefix);
+                }
+            }
+            if (context.elem != null)
+            {
+                var handler = OnElement;
+                if (handler != null)
+                {
+                    var e = new ElementArgs(context.elem.ns.GetTextSafely(), context.elem.name.GetTextSafely(), context.value.GetTextSafely().DeQuote());
+                    handler(this, e);
+                    RaiseNamespacePriefix(e.Prefix);
+                }
             }
             return base.VisitFilter(context);
         }
@@ -107,8 +133,8 @@ namespace GillSoft.ExpressionEvaluator
             if (handler != null)
             {
                 var e = new ElementArgs(context.ns.GetTextSafely(), context.name.GetTextSafely());
-                RaiseNamespacePriefix(e.Prefix);
                 handler(this, e);
+                RaiseNamespacePriefix(e.Prefix);
             }
             return base.VisitElement(context);
         }
@@ -122,9 +148,50 @@ namespace GillSoft.ExpressionEvaluator
 
     public static class ExtensionMethods
     {
+        public static string GetTextSafely(this RuleContext ruleContext)
+        {
+            var res = ruleContext != null ? ruleContext.GetText() : string.Empty;
+            return res;
+        }
+
         public static string GetTextSafely(this IToken token)
         {
             var res = token != null ? token.Text : string.Empty;
+            return res;
+        }
+
+        public static string DeQuote(this string value)
+        {
+            var quotes = new[] { @"'", "\"" };
+            var res = value;
+            foreach (var quote in quotes)
+            {
+                if (!string.IsNullOrWhiteSpace(res))
+                {
+                    if (res.StartsWith(quote))
+                    {
+                        if (res.Length <= 1)
+                        {
+                            res = string.Empty;
+                        }
+                        else
+                        {
+                            res = res.Substring(1, res.Length - 1);
+                        }
+                    }
+                    if (res.EndsWith(quote))
+                    {
+                        if (res.Length <= 1)
+                        {
+                            res = string.Empty;
+                        }
+                        else
+                        {
+                            res = res.Substring(0, res.Length - 1);
+                        }
+                    }
+                }
+            }
             return res;
         }
 
@@ -134,15 +201,16 @@ namespace GillSoft.ExpressionEvaluator
             var settings = new XmlWriterSettings
             {
                 Indent = true,
-                IndentChars = "  ",
-                NewLineChars = "\r\n",
-                NewLineHandling = NewLineHandling.Replace
+                IndentChars = "\t",
+                NewLineChars = Environment.NewLine,
+                NewLineHandling = NewLineHandling.Replace,
             };
             using (var writer = XmlWriter.Create(sb, settings))
             {
                 doc.Save(writer);
             }
-            return sb.ToString();
+            var res = sb.ToString();
+            return res;
         }
     }
 }

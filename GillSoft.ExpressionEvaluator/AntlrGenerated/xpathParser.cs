@@ -36,27 +36,28 @@ public partial class xpathParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		INTEGER=1, DECIMAL=2, IDENT=3, PATHSEP=4, ABRPATH=5, LPAR=6, RPAR=7, LBRAC=8, 
-		RBRAC=9, MINUS=10, PLUS=11, DOT=12, MUL=13, DOTDOT=14, AT=15, COMMA=16, 
-		PIPE=17, LESS=18, MORE_=19, EQ=20, LE=21, GE=22, COLON=23, CC=24, APOS=25, 
-		QUOT=26, STRING=27, Whitespace=28;
+		FUNCTION=1, DOUBLE_COLON=2, INTEGER=3, DECIMAL=4, IDENT=5, PATHSEP=6, 
+		ABRPATH=7, LPAR=8, RPAR=9, LBRAC=10, RBRAC=11, MINUS=12, PLUS=13, DOT=14, 
+		MUL=15, DOTDOT=16, AT=17, COMMA=18, PIPE=19, LESS=20, MORE_=21, EQ=22, 
+		LE=23, GE=24, COLON=25, CC=26, APOS=27, QUOT=28, STRING=29, Whitespace=30;
 	public const int
-		RULE_path = 0, RULE_pathElement = 1, RULE_filter = 2, RULE_attribute = 3, 
-		RULE_element = 4;
+		RULE_path = 0, RULE_pathElement = 1, RULE_filter = 2, RULE_function = 3, 
+		RULE_namespacePrefix = 4, RULE_attribute = 5, RULE_element = 6;
 	public static readonly string[] ruleNames = {
-		"path", "pathElement", "filter", "attribute", "element"
+		"path", "pathElement", "filter", "function", "namespacePrefix", "attribute", 
+		"element"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, null, null, null, "'/'", "'//'", "'('", "')'", "'['", "']'", "'-'", 
-		"'+'", "'.'", "'*'", "'..'", "'@'", "','", "'|'", "'<'", "'>'", null, 
-		"'<='", "'>='", "':'", "'::'", "'''", "'\"'"
+		null, null, null, null, null, null, "'/'", "'//'", "'('", "')'", "'['", 
+		"']'", "'-'", "'+'", "'.'", "'*'", "'..'", "'@'", "','", "'|'", "'<'", 
+		"'>'", null, "'<='", "'>='", "':'", null, "'''", "'\"'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "INTEGER", "DECIMAL", "IDENT", "PATHSEP", "ABRPATH", "LPAR", "RPAR", 
-		"LBRAC", "RBRAC", "MINUS", "PLUS", "DOT", "MUL", "DOTDOT", "AT", "COMMA", 
-		"PIPE", "LESS", "MORE_", "EQ", "LE", "GE", "COLON", "CC", "APOS", "QUOT", 
-		"STRING", "Whitespace"
+		null, "FUNCTION", "DOUBLE_COLON", "INTEGER", "DECIMAL", "IDENT", "PATHSEP", 
+		"ABRPATH", "LPAR", "RPAR", "LBRAC", "RBRAC", "MINUS", "PLUS", "DOT", "MUL", 
+		"DOTDOT", "AT", "COMMA", "PIPE", "LESS", "MORE_", "EQ", "LE", "GE", "COLON", 
+		"CC", "APOS", "QUOT", "STRING", "Whitespace"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -88,6 +89,12 @@ public partial class xpathParser : Parser {
 		Interpreter = new ParserATNSimulator(this, _ATN, decisionToDFA, sharedContextCache);
 	}
 	public partial class PathContext : ParserRuleContext {
+		public PathElementContext root;
+		public PathElementContext children;
+		public ITerminalNode[] PATHSEP() { return GetTokens(xpathParser.PATHSEP); }
+		public ITerminalNode PATHSEP(int i) {
+			return GetToken(xpathParser.PATHSEP, i);
+		}
 		public PathElementContext[] pathElement() {
 			return GetRuleContexts<PathElementContext>();
 		}
@@ -114,19 +121,22 @@ public partial class xpathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 11;
+			State = 14; Match(PATHSEP);
+			State = 15; _localctx.root = pathElement();
+			State = 20;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			do {
+			while (_la==PATHSEP) {
 				{
 				{
-				State = 10; pathElement();
+				State = 16; Match(PATHSEP);
+				State = 17; _localctx.children = pathElement();
 				}
 				}
-				State = 13;
+				State = 22;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
-			} while ( _la==PATHSEP );
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -144,9 +154,14 @@ public partial class xpathParser : Parser {
 		public ElementContext element() {
 			return GetRuleContext<ElementContext>(0);
 		}
-		public ITerminalNode[] PATHSEP() { return GetTokens(xpathParser.PATHSEP); }
-		public ITerminalNode PATHSEP(int i) {
-			return GetToken(xpathParser.PATHSEP, i);
+		public FunctionContext function() {
+			return GetRuleContext<FunctionContext>(0);
+		}
+		public FilterContext filter() {
+			return GetRuleContext<FilterContext>(0);
+		}
+		public AttributeContext attribute() {
+			return GetRuleContext<AttributeContext>(0);
 		}
 		public PathElementContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -164,25 +179,46 @@ public partial class xpathParser : Parser {
 	public PathElementContext pathElement() {
 		PathElementContext _localctx = new PathElementContext(Context, State);
 		EnterRule(_localctx, 2, RULE_pathElement);
+		int _la;
 		try {
-			EnterOuterAlt(_localctx, 1);
-			{
-			State = 18;
+			State = 31;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,1,Context) ) {
-			case 1:
+			switch (TokenStream.LA(1)) {
+			case FUNCTION:
+			case IDENT:
+				EnterOuterAlt(_localctx, 1);
 				{
-				State = 15; Match(PATHSEP);
+				{
+				State = 24;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+				if (_la==FUNCTION) {
+					{
+					State = 23; function();
+					}
+				}
+
+				State = 26; element();
+				State = 28;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+				if (_la==LBRAC) {
+					{
+					State = 27; filter();
+					}
+				}
+
+				}
 				}
 				break;
-			case 2:
+			case AT:
+				EnterOuterAlt(_localctx, 2);
 				{
-				State = 16; Match(PATHSEP);
-				State = 17; Match(PATHSEP);
+				State = 30; attribute();
 				}
 				break;
-			}
-			State = 20; element();
+			default:
+				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -198,14 +234,18 @@ public partial class xpathParser : Parser {
 
 	public partial class FilterContext : ParserRuleContext {
 		public AttributeContext attr;
+		public ElementContext elem;
 		public IToken value;
 		public ITerminalNode LBRAC() { return GetToken(xpathParser.LBRAC, 0); }
 		public ITerminalNode EQ() { return GetToken(xpathParser.EQ, 0); }
 		public ITerminalNode RBRAC() { return GetToken(xpathParser.RBRAC, 0); }
+		public ITerminalNode STRING() { return GetToken(xpathParser.STRING, 0); }
 		public AttributeContext attribute() {
 			return GetRuleContext<AttributeContext>(0);
 		}
-		public ITerminalNode STRING() { return GetToken(xpathParser.STRING, 0); }
+		public ElementContext element() {
+			return GetRuleContext<ElementContext>(0);
+		}
 		public FilterContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -225,11 +265,100 @@ public partial class xpathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 22; Match(LBRAC);
-			State = 23; _localctx.attr = attribute();
-			State = 24; Match(EQ);
-			State = 25; _localctx.value = Match(STRING);
-			State = 26; Match(RBRAC);
+			State = 33; Match(LBRAC);
+			State = 36;
+			ErrorHandler.Sync(this);
+			switch (TokenStream.LA(1)) {
+			case AT:
+				{
+				State = 34; _localctx.attr = attribute();
+				}
+				break;
+			case IDENT:
+				{
+				State = 35; _localctx.elem = element();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+			State = 38; Match(EQ);
+			State = 39; _localctx.value = Match(STRING);
+			State = 40; Match(RBRAC);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class FunctionContext : ParserRuleContext {
+		public IToken name;
+		public ITerminalNode DOUBLE_COLON() { return GetToken(xpathParser.DOUBLE_COLON, 0); }
+		public ITerminalNode FUNCTION() { return GetToken(xpathParser.FUNCTION, 0); }
+		public FunctionContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_function; } }
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IxpathVisitor<TResult> typedVisitor = visitor as IxpathVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitFunction(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public FunctionContext function() {
+		FunctionContext _localctx = new FunctionContext(Context, State);
+		EnterRule(_localctx, 6, RULE_function);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 42; _localctx.name = Match(FUNCTION);
+			State = 43; Match(DOUBLE_COLON);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class NamespacePrefixContext : ParserRuleContext {
+		public IToken name;
+		public ITerminalNode IDENT() { return GetToken(xpathParser.IDENT, 0); }
+		public NamespacePrefixContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_namespacePrefix; } }
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IxpathVisitor<TResult> typedVisitor = visitor as IxpathVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitNamespacePrefix(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public NamespacePrefixContext namespacePrefix() {
+		NamespacePrefixContext _localctx = new NamespacePrefixContext(Context, State);
+		EnterRule(_localctx, 8, RULE_namespacePrefix);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 45; _localctx.name = Match(IDENT);
 			}
 		}
 		catch (RecognitionException re) {
@@ -244,13 +373,13 @@ public partial class xpathParser : Parser {
 	}
 
 	public partial class AttributeContext : ParserRuleContext {
-		public IToken ns;
+		public NamespacePrefixContext ns;
 		public IToken name;
 		public ITerminalNode AT() { return GetToken(xpathParser.AT, 0); }
+		public ITerminalNode IDENT() { return GetToken(xpathParser.IDENT, 0); }
 		public ITerminalNode COLON() { return GetToken(xpathParser.COLON, 0); }
-		public ITerminalNode[] IDENT() { return GetTokens(xpathParser.IDENT); }
-		public ITerminalNode IDENT(int i) {
-			return GetToken(xpathParser.IDENT, i);
+		public NamespacePrefixContext namespacePrefix() {
+			return GetRuleContext<NamespacePrefixContext>(0);
 		}
 		public AttributeContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -267,31 +396,22 @@ public partial class xpathParser : Parser {
 	[RuleVersion(0)]
 	public AttributeContext attribute() {
 		AttributeContext _localctx = new AttributeContext(Context, State);
-		EnterRule(_localctx, 6, RULE_attribute);
+		EnterRule(_localctx, 10, RULE_attribute);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 28; Match(AT);
-			State = 33;
+			State = 47; Match(AT);
+			State = 51;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,2,Context) ) {
+			switch ( Interpreter.AdaptivePredict(TokenStream,5,Context) ) {
 			case 1:
 				{
-				{
-				State = 29; _localctx.ns = Match(IDENT);
-				State = 30; Match(COLON);
-				State = 31; _localctx.name = Match(IDENT);
-				}
-				}
-				break;
-			case 2:
-				{
-				{
-				State = 32; _localctx.name = Match(IDENT);
-				}
+				State = 48; _localctx.ns = namespacePrefix();
+				State = 49; Match(COLON);
 				}
 				break;
 			}
+			State = 53; _localctx.name = Match(IDENT);
 			}
 		}
 		catch (RecognitionException re) {
@@ -306,15 +426,12 @@ public partial class xpathParser : Parser {
 	}
 
 	public partial class ElementContext : ParserRuleContext {
-		public IToken ns;
+		public NamespacePrefixContext ns;
 		public IToken name;
-		public FilterContext filter() {
-			return GetRuleContext<FilterContext>(0);
-		}
+		public ITerminalNode IDENT() { return GetToken(xpathParser.IDENT, 0); }
 		public ITerminalNode COLON() { return GetToken(xpathParser.COLON, 0); }
-		public ITerminalNode[] IDENT() { return GetTokens(xpathParser.IDENT); }
-		public ITerminalNode IDENT(int i) {
-			return GetToken(xpathParser.IDENT, i);
+		public NamespacePrefixContext namespacePrefix() {
+			return GetRuleContext<NamespacePrefixContext>(0);
 		}
 		public ElementContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -331,40 +448,21 @@ public partial class xpathParser : Parser {
 	[RuleVersion(0)]
 	public ElementContext element() {
 		ElementContext _localctx = new ElementContext(Context, State);
-		EnterRule(_localctx, 8, RULE_element);
-		int _la;
+		EnterRule(_localctx, 12, RULE_element);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 39;
+			State = 58;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,3,Context) ) {
+			switch ( Interpreter.AdaptivePredict(TokenStream,6,Context) ) {
 			case 1:
 				{
-				{
-				State = 35; _localctx.ns = Match(IDENT);
-				State = 36; Match(COLON);
-				State = 37; _localctx.name = Match(IDENT);
-				}
-				}
-				break;
-			case 2:
-				{
-				{
-				State = 38; _localctx.name = Match(IDENT);
-				}
+				State = 55; _localctx.ns = namespacePrefix();
+				State = 56; Match(COLON);
 				}
 				break;
 			}
-			State = 42;
-			ErrorHandler.Sync(this);
-			_la = TokenStream.LA(1);
-			if (_la==LBRAC) {
-				{
-				State = 41; filter();
-				}
-			}
-
+			State = 60; _localctx.name = Match(IDENT);
 			}
 		}
 		catch (RecognitionException re) {
@@ -382,25 +480,32 @@ public partial class xpathParser : Parser {
 	private static string _serializeATN()
 	{
 	    StringBuilder sb = new StringBuilder();
-	    sb.Append("\x3\x430\xD6D1\x8206\xAD2D\x4417\xAEF1\x8D80\xAADD\x3\x1E");
-		sb.Append("/\x4\x2\t\x2\x4\x3\t\x3\x4\x4\t\x4\x4\x5\t\x5\x4\x6\t\x6\x3");
-		sb.Append("\x2\x6\x2\xE\n\x2\r\x2\xE\x2\xF\x3\x3\x3\x3\x3\x3\x5\x3\x15");
-		sb.Append("\n\x3\x3\x3\x3\x3\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x3\x4\x3\x5");
-		sb.Append("\x3\x5\x3\x5\x3\x5\x3\x5\x5\x5$\n\x5\x3\x6\x3\x6\x3\x6\x3\x6");
-		sb.Append("\x5\x6*\n\x6\x3\x6\x5\x6-\n\x6\x3\x6\x2\x2\a\x2\x4\x6\b\n\x2");
-		sb.Append("\x2.\x2\r\x3\x2\x2\x2\x4\x14\x3\x2\x2\x2\x6\x18\x3\x2\x2\x2");
-		sb.Append("\b\x1E\x3\x2\x2\x2\n)\x3\x2\x2\x2\f\xE\x5\x4\x3\x2\r\f\x3\x2");
-		sb.Append("\x2\x2\xE\xF\x3\x2\x2\x2\xF\r\x3\x2\x2\x2\xF\x10\x3\x2\x2\x2");
-		sb.Append("\x10\x3\x3\x2\x2\x2\x11\x15\a\x6\x2\x2\x12\x13\a\x6\x2\x2\x13");
-		sb.Append("\x15\a\x6\x2\x2\x14\x11\x3\x2\x2\x2\x14\x12\x3\x2\x2\x2\x15");
-		sb.Append("\x16\x3\x2\x2\x2\x16\x17\x5\n\x6\x2\x17\x5\x3\x2\x2\x2\x18\x19");
-		sb.Append("\a\n\x2\x2\x19\x1A\x5\b\x5\x2\x1A\x1B\a\x16\x2\x2\x1B\x1C\a");
-		sb.Append("\x1D\x2\x2\x1C\x1D\a\v\x2\x2\x1D\a\x3\x2\x2\x2\x1E#\a\x11\x2");
-		sb.Append("\x2\x1F \a\x5\x2\x2 !\a\x19\x2\x2!$\a\x5\x2\x2\"$\a\x5\x2\x2");
-		sb.Append("#\x1F\x3\x2\x2\x2#\"\x3\x2\x2\x2$\t\x3\x2\x2\x2%&\a\x5\x2\x2");
-		sb.Append("&\'\a\x19\x2\x2\'*\a\x5\x2\x2(*\a\x5\x2\x2)%\x3\x2\x2\x2)(\x3");
-		sb.Append("\x2\x2\x2*,\x3\x2\x2\x2+-\x5\x6\x4\x2,+\x3\x2\x2\x2,-\x3\x2");
-		sb.Append("\x2\x2-\v\x3\x2\x2\x2\a\xF\x14#),");
+	    sb.Append("\x3\x430\xD6D1\x8206\xAD2D\x4417\xAEF1\x8D80\xAADD\x3 \x41");
+		sb.Append("\x4\x2\t\x2\x4\x3\t\x3\x4\x4\t\x4\x4\x5\t\x5\x4\x6\t\x6\x4\a");
+		sb.Append("\t\a\x4\b\t\b\x3\x2\x3\x2\x3\x2\x3\x2\a\x2\x15\n\x2\f\x2\xE");
+		sb.Append("\x2\x18\v\x2\x3\x3\x5\x3\x1B\n\x3\x3\x3\x3\x3\x5\x3\x1F\n\x3");
+		sb.Append("\x3\x3\x5\x3\"\n\x3\x3\x4\x3\x4\x3\x4\x5\x4\'\n\x4\x3\x4\x3");
+		sb.Append("\x4\x3\x4\x3\x4\x3\x5\x3\x5\x3\x5\x3\x6\x3\x6\x3\a\x3\a\x3\a");
+		sb.Append("\x3\a\x5\a\x36\n\a\x3\a\x3\a\x3\b\x3\b\x3\b\x5\b=\n\b\x3\b\x3");
+		sb.Append("\b\x3\b\x2\x2\t\x2\x4\x6\b\n\f\xE\x2\x2@\x2\x10\x3\x2\x2\x2");
+		sb.Append("\x4!\x3\x2\x2\x2\x6#\x3\x2\x2\x2\b,\x3\x2\x2\x2\n/\x3\x2\x2");
+		sb.Append("\x2\f\x31\x3\x2\x2\x2\xE<\x3\x2\x2\x2\x10\x11\a\b\x2\x2\x11");
+		sb.Append("\x16\x5\x4\x3\x2\x12\x13\a\b\x2\x2\x13\x15\x5\x4\x3\x2\x14\x12");
+		sb.Append("\x3\x2\x2\x2\x15\x18\x3\x2\x2\x2\x16\x14\x3\x2\x2\x2\x16\x17");
+		sb.Append("\x3\x2\x2\x2\x17\x3\x3\x2\x2\x2\x18\x16\x3\x2\x2\x2\x19\x1B");
+		sb.Append("\x5\b\x5\x2\x1A\x19\x3\x2\x2\x2\x1A\x1B\x3\x2\x2\x2\x1B\x1C");
+		sb.Append("\x3\x2\x2\x2\x1C\x1E\x5\xE\b\x2\x1D\x1F\x5\x6\x4\x2\x1E\x1D");
+		sb.Append("\x3\x2\x2\x2\x1E\x1F\x3\x2\x2\x2\x1F\"\x3\x2\x2\x2 \"\x5\f\a");
+		sb.Append("\x2!\x1A\x3\x2\x2\x2! \x3\x2\x2\x2\"\x5\x3\x2\x2\x2#&\a\f\x2");
+		sb.Append("\x2$\'\x5\f\a\x2%\'\x5\xE\b\x2&$\x3\x2\x2\x2&%\x3\x2\x2\x2\'");
+		sb.Append("(\x3\x2\x2\x2()\a\x18\x2\x2)*\a\x1F\x2\x2*+\a\r\x2\x2+\a\x3");
+		sb.Append("\x2\x2\x2,-\a\x3\x2\x2-.\a\x4\x2\x2.\t\x3\x2\x2\x2/\x30\a\a");
+		sb.Append("\x2\x2\x30\v\x3\x2\x2\x2\x31\x35\a\x13\x2\x2\x32\x33\x5\n\x6");
+		sb.Append("\x2\x33\x34\a\x1B\x2\x2\x34\x36\x3\x2\x2\x2\x35\x32\x3\x2\x2");
+		sb.Append("\x2\x35\x36\x3\x2\x2\x2\x36\x37\x3\x2\x2\x2\x37\x38\a\a\x2\x2");
+		sb.Append("\x38\r\x3\x2\x2\x2\x39:\x5\n\x6\x2:;\a\x1B\x2\x2;=\x3\x2\x2");
+		sb.Append("\x2<\x39\x3\x2\x2\x2<=\x3\x2\x2\x2=>\x3\x2\x2\x2>?\a\a\x2\x2");
+		sb.Append("?\xF\x3\x2\x2\x2\t\x16\x1A\x1E!&\x35<");
 	    return sb.ToString();
 	}
 

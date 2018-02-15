@@ -1,71 +1,74 @@
 grammar xpath;
 
-path : pathElement+;
+path: PATHSEP root = pathElement ( PATHSEP children = pathElement )*;
 
-pathElement : (PATHSEP | PATHSEP PATHSEP ) element;
+pathElement: (function ? element filter?) | attribute;
 
-filter : LBRAC attr = attribute EQ value = STRING RBRAC;
+filter:
+	LBRAC (attr = attribute | elem = element) EQ value = STRING RBRAC;
 
-attribute : AT ((ns = IDENT COLON name = IDENT) | (name = IDENT));
+function: name = FUNCTION DOUBLE_COLON;
 
-element : ((ns = IDENT COLON name = IDENT) | (name = IDENT)) (filter)?;
-            
-INTEGER : [0-9]+;
+namespacePrefix: name = IDENT ;
 
-DECIMAL : [0-9]+'.'[0-9]+;
+attribute: AT (ns = namespacePrefix COLON)? name = IDENT;
 
-IDENT : [_#A-Za-z][_#.A-Za-z0-9]*;
+element: (ns = namespacePrefix COLON)? name = IDENT;
 
-  PATHSEP 
-       :'/';
-  ABRPATH   
-       : '//';
-  LPAR   
-       : '(';
-  RPAR   
-       : ')';
-  LBRAC   
-       :  '[';
-  RBRAC   
-       :  ']';
-  MINUS   
-       :  '-';
-  PLUS   
-       :  '+';
-  DOT   
-       :  '.';
-  MUL   
-       : '*';
-  DOTDOT   
-       :  '..';
-  AT   
-       : '@';
-  COMMA  
-       : ',';
-  PIPE   
-       :  '|';
-  LESS   
-       :  '<';
-  MORE_ 
-       :  '>';
-  EQ
-       :  '==' | '=';
-  LE   
-       :  '<=';
-  GE   
-       :  '>=';
-  COLON   
-       :  ':';
-  CC   
-       :  '::';
-  APOS   
-       :  '\'';
-  QUOT   
-       :  '"';
-STRING  :  '"' ~'"'* '"'
-  |  '\'' ~'\''* '\''
-  ;  
+FUNCTION:
+	'ancestor'
+	| 'ancestor-or-self'
+	| 'attribute'
+	| 'child'
+	| 'descendant'
+	| 'descendant-or-self'
+	| 'following'
+	| 'following-sibling'
+	| 'namespace'
+	| 'parent'
+	| 'preceding'
+	| 'preceding-sibling'
+	| 'self';
 
-Whitespace
-  :  (' '|'\t'|'\n'|'\r')+ ->skip
-  ;
+DOUBLE_COLON : '::';
+
+INTEGER: [0-9]+;
+
+DECIMAL: [0-9]+ '.' [0-9]+;
+
+fragment HASH : '#' ;
+fragment HYPHEN : '-' ;
+fragment UNDERSCORE : '_' ;
+fragment DIGIT  : '0'..'9' ;
+fragment LETTER : 'a'..'z' |'A'..'Z' ;
+fragment NUMBER : DIGIT+ ;
+fragment WORD : LETTER+  ;
+
+IDENT : HASH | LETTER (LETTER | DIGIT | HYPHEN | UNDERSCORE)*;
+
+PATHSEP: '/';
+ABRPATH: '//';
+LPAR: '(';
+RPAR: ')';
+LBRAC: '[';
+RBRAC: ']';
+MINUS: '-';
+PLUS: '+';
+DOT: '.';
+MUL: '*';
+DOTDOT: '..';
+AT: '@';
+COMMA: ',';
+PIPE: '|';
+LESS: '<';
+MORE_: '>';
+EQ: '==' | '=';
+LE: '<=';
+GE: '>=';
+COLON: ':';
+CC: '::';
+APOS: '\'';
+QUOT: '"';
+STRING: '"' ~'"'* '"' | '\'' ~'\''* '\'';
+
+Whitespace: (' ' | '\t' | '\n' | '\r')+ -> skip;

@@ -14,8 +14,8 @@ namespace GillSoft.ExpressionEvaluator.Demo
         {
             try
             {
-                CheckExpressionParser();
-                //CheckXPathParser();
+                //CheckExpressionParser();
+                CheckXPathParser();
             }
             catch (Exception ex)
             {
@@ -32,7 +32,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
             {
                 try
                 {
-                    var namespaces = new Dictionary<string, string>
+                    var namespaces = new Dictionary<string, string>()
                     {
                         { "", ""},
                         { "ns0", "http://www.gillsoft.ie/cfg/1.0"},
@@ -58,6 +58,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
                             currentElement.AppendChild(elem);
                             currentElement = elem;
                         }
+                        currentElement.InnerText = e.InnerText;
                     };
 
                     xpath.OnAttribute += (s, e) =>
@@ -81,7 +82,8 @@ namespace GillSoft.ExpressionEvaluator.Demo
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Exception thrown: " + line + ":" + ex.Message);
+                    Console.WriteLine("Exception thrown: {0}", ex);
+                    Console.WriteLine("Input: {0}", line);
                 }
             }
         }

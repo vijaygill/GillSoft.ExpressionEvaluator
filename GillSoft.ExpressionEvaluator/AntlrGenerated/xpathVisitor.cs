@@ -51,6 +51,18 @@ public interface IxpathVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFilter([NotNull] xpathParser.FilterContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="xpathParser.function"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunction([NotNull] xpathParser.FunctionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="xpathParser.namespacePrefix"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNamespacePrefix([NotNull] xpathParser.NamespacePrefixContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="xpathParser.attribute"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

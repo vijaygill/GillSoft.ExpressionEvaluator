@@ -81,13 +81,13 @@
     <CallTarget Targets="MergeThirdPartyAssemblies" />
   </Target>
   <ItemGroup>
-    <ILRepackMergedItems Include="C:\Temp\GillSoft.ExpressionEvaluator\GillSoft.ExpressionEvaluator\bin\Debug\\Antlr4.Runtime.Standard.dll" />
-    <ILRepack Include="C:\Temp\GillSoft.ExpressionEvaluator\\packages\ILRepack.2.0.13\tools\ILRepack.exe" />
+    <ILRepackMergedItems Include="$(SolutionDir)\GillSoft.ExpressionEvaluator\GillSoft.ExpressionEvaluator\bin\Debug\\Antlr4.Runtime.Standard.dll" />
+    <ILRepack Include="$(SolutionDir)\GillSoft.ExpressionEvaluator\packages\ILRepack.2.0.13\tools\ILRepack.exe" />
   </ItemGroup>
   <PropertyGroup>
     <ILRepackBinary>$(SolutionDir)\**\ILRepack.exe</ILRepackBinary>
   </PropertyGroup>
-  <Target Name="MergeThirdPartyAssemblies" Condition="'$(Configuration)'!='Debug1'">
+  <Target Name="MergeThirdPartyAssemblies" Condition="'$(Configuration)'!='Debug'">
     <Message Text="Merging assemblies... @(ILRepack)" Importance="High" />
     <Exec Command="&quot;@(ILRepack)&quot; /lib:$(TargetDir) /verbose /out:&quot;@(MainAssembly)&quot; &quot;@(IntermediateAssembly)&quot; @(ILRepackMergedItems->'&quot;%(Identity)&quot;', ' ')" />
     <Exec Command="del @(ILRepackMergedItems->'&quot;%(Identity)&quot;', ' ')" />
