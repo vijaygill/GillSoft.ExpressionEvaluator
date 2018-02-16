@@ -11,55 +11,13 @@ using System.Xml;
 
 namespace GillSoft.ExpressionEvaluator
 {
-    public class ElementArgs
-    {
-        public string Prefix { get; private set; }
-        public string Name { get; private set; }
-        public string InnerText { get; set; }
-
-        public ElementArgs(string prefix, string name, string innerText)
-        {
-            this.Prefix = prefix;
-            this.Name = name;
-            this.InnerText = innerText;
-        }
-
-        public ElementArgs(string prefix, string name)
-            : this(prefix, name, string.Empty)
-        {
-        }
-    }
-
-    public class NamespacePrefixArgs
-    {
-        public string Prefix { get; private set; }
-        public string Uri { get; private set; }
-
-        public NamespacePrefixArgs(string prefix)
-        {
-            this.Prefix = prefix;
-        }
-    }
-
-    public class AttributeArgs
-    {
-        public string Prefix { get; private set; }
-        public string Name { get; private set; }
-        public string Value { get; private set; }
-
-        public AttributeArgs(string prefix, string name, string value)
-        {
-            this.Prefix = prefix;
-            this.Name = name;
-            this.Value = value;
-        }
-    }
 
     public class XPathParserVisitor : xpathBaseVisitor<string>, IAntlrErrorListener<IToken>
     {
         public event EventHandler<ElementArgs> OnElement;
         public event EventHandler<AttributeArgs> OnAttribute;
         public event EventHandler<NamespacePrefixArgs> OnNewPrefix;
+        public event EventHandler<AxisArgs> OnAxis;
 
         private readonly Dictionary<string, string> namespaces = new Dictionary<string, string>();
 
@@ -96,9 +54,15 @@ namespace GillSoft.ExpressionEvaluator
             }
         }
 
-        public override string VisitFunction([NotNull] xpathParser.FunctionContext context)
+        public override string VisitAxis([NotNull] xpathParser.AxisContext context)
         {
-            return base.VisitFunction(context);
+            var handler = OnAxis;
+            if(handler!=null)
+            {
+                var e = new AxisArgs(context.name.Text);
+                handler(this, e);
+            }
+            return base.VisitAxis(context);
         }
 
         public override string VisitFilter([NotNull] xpathParser.FilterContext context)
@@ -143,74 +107,6 @@ namespace GillSoft.ExpressionEvaluator
         public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
             throw Expression.CreateException(offendingSymbol, msg);
-        }
-    }
-
-    public static class ExtensionMethods
-    {
-        public static string GetTextSafely(this RuleContext ruleContext)
-        {
-            var res = ruleContext != null ? ruleContext.GetText() : string.Empty;
-            return res;
-        }
-
-        public static string GetTextSafely(this IToken token)
-        {
-            var res = token != null ? token.Text : string.Empty;
-            return res;
-        }
-
-        public static string DeQuote(this string value)
-        {
-            var quotes = new[] { @"'", "\"" };
-            var res = value;
-            foreach (var quote in quotes)
-            {
-                if (!string.IsNullOrWhiteSpace(res))
-                {
-                    if (res.StartsWith(quote))
-                    {
-                        if (res.Length <= 1)
-                        {
-                            res = string.Empty;
-                        }
-                        else
-                        {
-                            res = res.Substring(1, res.Length - 1);
-                        }
-                    }
-                    if (res.EndsWith(quote))
-                    {
-                        if (res.Length <= 1)
-                        {
-                            res = string.Empty;
-                        }
-                        else
-                        {
-                            res = res.Substring(0, res.Length - 1);
-                        }
-                    }
-                }
-            }
-            return res;
-        }
-
-        public static string Beautify(this XmlDocument doc)
-        {
-            var sb = new StringBuilder();
-            var settings = new XmlWriterSettings
-            {
-                Indent = true,
-                IndentChars = "\t",
-                NewLineChars = Environment.NewLine,
-                NewLineHandling = NewLineHandling.Replace,
-            };
-            using (var writer = XmlWriter.Create(sb, settings))
-            {
-                doc.Save(writer);
-            }
-            var res = sb.ToString();
-            return res;
         }
     }
 }

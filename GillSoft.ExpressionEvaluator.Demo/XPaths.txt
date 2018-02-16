@@ -4,3 +4,4 @@
 /ns0:Workbook/ns0:Worksheet/ns0:Table/ns0:Row/ns0:Cell[ns0:Data = 'SendPort_BomiReceiver_Address']/following-sibling::ns0:Cell/ns0:Data
 #/configuration/connectionStrings/add[@name = 'MessagingDBConnectionString']/@connectionString
 /pubSub3-Properties/add[@key='MSMQTransport.QueueHost']/@value
+/pubSub3.Properties/add[@key='MSMQTransport.QueueHost']/@value

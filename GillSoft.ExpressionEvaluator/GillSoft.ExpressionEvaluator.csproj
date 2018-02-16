@@ -57,10 +57,15 @@
     <Compile Include="AntlrGenerated\xpathLexer.cs" />
     <Compile Include="AntlrGenerated\xpathParser.cs" />
     <Compile Include="AntlrGenerated\xpathVisitor.cs" />
+    <Compile Include="AttributeArgs.cs" />
+    <Compile Include="AxisArgs.cs" />
+    <Compile Include="ElementArgs.cs" />
     <Compile Include="Expression.cs" />
     <Compile Include="ExpressionEvalutationVisitor.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FunctionArgs.cs" />
     <Compile Include="FunctionParameter.cs" />
+    <Compile Include="NamespacePrefixArgs.cs" />
     <Compile Include="VariableArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="XPathParserVisitor.cs" />
@@ -68,6 +73,9 @@
   <ItemGroup>
     <None Include="..\Grammar\Expression.g4">
       <Link>Expression.g4</Link>
+    </None>
+    <None Include="..\Grammar\xpath.g4">
+      <Link>xpath.g4</Link>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
@@ -81,8 +89,8 @@
     <CallTarget Targets="MergeThirdPartyAssemblies" />
   </Target>
   <ItemGroup>
-    <ILRepackMergedItems Include="$(SolutionDir)\GillSoft.ExpressionEvaluator\GillSoft.ExpressionEvaluator\bin\Debug\\Antlr4.Runtime.Standard.dll" />
-    <ILRepack Include="$(SolutionDir)\GillSoft.ExpressionEvaluator\packages\ILRepack.2.0.13\tools\ILRepack.exe" />
+    <ILRepackMergedItems Include="$(SolutionDir)\GillSoft.ExpressionEvaluator\bin\$(Configuration)\\Antlr4.Runtime.Standard.dll" />
+    <ILRepack Include="$(SolutionDir)\packages\ILRepack.2.0.13\tools\ILRepack.exe" />
   </ItemGroup>
   <PropertyGroup>
     <ILRepackBinary>$(SolutionDir)\**\ILRepack.exe</ILRepackBinary>

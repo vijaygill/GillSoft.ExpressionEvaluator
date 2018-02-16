@@ -16,7 +16,6 @@ namespace GillSoft.ExpressionEvaluator
         private readonly Action<FunctionArgs> handleFunction;
         private readonly Action<VariableArgs> handleVariable;
 
-
         private readonly string minus = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.MINUS).Replace("'", string.Empty);
         private readonly string plus = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.PLUS).Replace("'", string.Empty);
         private readonly string not = ExpressionParser.DefaultVocabulary.GetLiteralName(ExpressionParser.NOT).Replace("'", string.Empty);

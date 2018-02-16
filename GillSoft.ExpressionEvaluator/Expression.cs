@@ -15,12 +15,20 @@ namespace GillSoft.ExpressionEvaluator
 
         private void HandleFunctionWrapper(FunctionArgs args)
         {
-            HandleFunction?.Invoke(this, args);
+            var handler = HandleFunction;
+            if (handler != null)
+            {
+                handler(this, args);
+            }
         }
 
         private void HandleVariableWrapper(VariableArgs args)
         {
-            HandleVariable?.Invoke(this, args);
+            var handler = HandleVariable;
+            if (handler != null)
+            {
+                handler(this, args);
+            }
         }
 
         public object Evaluate(string expression)

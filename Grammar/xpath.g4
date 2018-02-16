@@ -1,21 +1,24 @@
 grammar xpath;
 
-path: PATHSEP root = pathElement ( PATHSEP children = pathElement )*;
+path:
+	PATHSEP documentRoot = pathElement (
+		PATHSEP documentChildren = pathElement
+	)*;
 
-pathElement: (function ? element filter?) | attribute;
+pathElement: (axis? element filter?) | attribute;
 
 filter:
 	LBRAC (attr = attribute | elem = element) EQ value = STRING RBRAC;
 
-function: name = FUNCTION DOUBLE_COLON;
+axis: name = AXIS COLONCOLON;
 
-namespacePrefix: name = IDENT ;
+namespacePrefix: name = IDENT;
 
 attribute: AT (ns = namespacePrefix COLON)? name = IDENT;
 
 element: (ns = namespacePrefix COLON)? name = IDENT;
 
-FUNCTION:
+AXIS:
 	'ancestor'
 	| 'ancestor-or-self'
 	| 'attribute'
@@ -30,45 +33,26 @@ FUNCTION:
 	| 'preceding-sibling'
 	| 'self';
 
-DOUBLE_COLON : '::';
+fragment HASH: '#';
+fragment HYPHEN: '-';
+fragment UNDERSCORE: '_';
+fragment DIGIT: '0' ..'9';
+fragment LETTER: 'a' ..'z' | 'A' ..'Z';
+fragment NUMBER: DIGIT+;
+fragment WORD: LETTER+;
+fragment DOT: '.';
 
-INTEGER: [0-9]+;
-
-DECIMAL: [0-9]+ '.' [0-9]+;
-
-fragment HASH : '#' ;
-fragment HYPHEN : '-' ;
-fragment UNDERSCORE : '_' ;
-fragment DIGIT  : '0'..'9' ;
-fragment LETTER : 'a'..'z' |'A'..'Z' ;
-fragment NUMBER : DIGIT+ ;
-fragment WORD : LETTER+  ;
-
-IDENT : HASH | LETTER (LETTER | DIGIT | HYPHEN | UNDERSCORE)*;
+IDENT:
+	HASH
+	| LETTER (LETTER | DIGIT | HYPHEN | UNDERSCORE | DOT)*;
 
 PATHSEP: '/';
-ABRPATH: '//';
-LPAR: '(';
-RPAR: ')';
 LBRAC: '[';
 RBRAC: ']';
-MINUS: '-';
-PLUS: '+';
-DOT: '.';
-MUL: '*';
-DOTDOT: '..';
 AT: '@';
-COMMA: ',';
-PIPE: '|';
-LESS: '<';
-MORE_: '>';
 EQ: '==' | '=';
-LE: '<=';
-GE: '>=';
 COLON: ':';
-CC: '::';
-APOS: '\'';
-QUOT: '"';
+COLONCOLON: '::';
 STRING: '"' ~'"'* '"' | '\'' ~'\''* '\'';
 
 Whitespace: (' ' | '\t' | '\n' | '\r')+ -> skip;
