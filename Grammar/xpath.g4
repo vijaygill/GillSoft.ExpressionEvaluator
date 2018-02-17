@@ -1,9 +1,7 @@
 grammar xpath;
 
 path:
-	PATHSEP documentRoot = pathElement (
-		PATHSEP documentChildren = pathElement
-	)*;
+	(PATHSEP pathElement)+;
 
 pathElement: (axis? element filter?) | attribute;
 
