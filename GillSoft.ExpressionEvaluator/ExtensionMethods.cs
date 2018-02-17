@@ -63,20 +63,22 @@ namespace GillSoft.ExpressionEvaluator
 
         public static string Beautify(this XmlDocument doc)
         {
-            var sb = new StringBuilder();
             var settings = new XmlWriterSettings
             {
                 Indent = true,
-                IndentChars = "\t",
-                NewLineChars = Environment.NewLine,
-                NewLineHandling = NewLineHandling.Replace,
             };
-            using (var writer = XmlWriter.Create(sb, settings))
+            using (var ms = new MemoryStream())
             {
-                doc.Save(writer);
+                var docTemp = new XmlDocument();
+                docTemp.LoadXml(doc.OuterXml);
+
+                using (var writer = XmlTextWriter.Create(ms, settings))
+                {
+                    docTemp.Save(writer);
+                    var res = writer.Settings.Encoding.GetString(ms.ToArray());
+                    return res;
+                }
             }
-            var res = sb.ToString();
-            return res;
         }
     }
 }
