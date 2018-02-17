@@ -14,51 +14,25 @@ namespace GillSoft.ExpressionEvaluator
 
     public static class ExtensionMethods
     {
-        public static string GetTextSafely(this RuleContext ruleContext)
+        internal static string GetTextSafely(this RuleContext ruleContext)
         {
             var res = ruleContext != null ? ruleContext.GetText() : string.Empty;
             return res;
         }
 
-        public static string GetTextSafely(this IToken token)
+        internal static string GetTextSafely(this IToken token)
         {
             var res = token != null ? token.Text : string.Empty;
             return res;
         }
 
-        public static string DeQuote(this string value)
+        internal static void InvokeHandler<T> (this object sender, EventHandler<T> handler, T eventArgs)
         {
-            var quotes = new[] { @"'", "\"" };
-            var res = value;
-            foreach (var quote in quotes)
+            var handlerTemp = handler;
+            if(handlerTemp != null)
             {
-                if (!string.IsNullOrWhiteSpace(res))
-                {
-                    if (res.StartsWith(quote))
-                    {
-                        if (res.Length <= 1)
-                        {
-                            res = string.Empty;
-                        }
-                        else
-                        {
-                            res = res.Substring(1, res.Length - 1);
-                        }
-                    }
-                    if (res.EndsWith(quote))
-                    {
-                        if (res.Length <= 1)
-                        {
-                            res = string.Empty;
-                        }
-                        else
-                        {
-                            res = res.Substring(0, res.Length - 1);
-                        }
-                    }
-                }
+                handlerTemp(sender, eventArgs);
             }
-            return res;
         }
 
         public static string Beautify(this XmlDocument doc)

@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<a xmlns:ns0="http://example.com/namespaces/ns_ns0" xmlns="http://example.com/namespaces/ns_default">
+  <ns0:b>
+  </ns0:b>
+</a>

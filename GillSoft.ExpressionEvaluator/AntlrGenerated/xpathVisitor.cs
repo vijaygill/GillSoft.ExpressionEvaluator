@@ -74,5 +74,23 @@ public interface IxpathVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitElement([NotNull] xpathParser.ElementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="xpathParser.string"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitString([NotNull] xpathParser.StringContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="xpathParser.stringSingleQuote"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStringSingleQuote([NotNull] xpathParser.StringSingleQuoteContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="xpathParser.stringDoubleQuote"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStringDoubleQuote([NotNull] xpathParser.StringDoubleQuoteContext context);
 }
 } // namespace GillSoft.ExpressionEvaluator

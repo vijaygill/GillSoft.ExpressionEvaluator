@@ -9,7 +9,7 @@ using System.Globalization;
 using Antlr4.Runtime.Tree;
 using System.Text.RegularExpressions;
 
-namespace GillSoft.ExpressionEvaluator
+namespace GillSoft.ExpressionEvaluator.Internals
 {
     internal class ExpressionEvalutationVisitor : ExpressionBaseVisitor<object>
     {

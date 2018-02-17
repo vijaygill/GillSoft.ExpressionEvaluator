@@ -60,6 +60,9 @@
     <Content Include="input.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="SampleUpdateExistingXmlDocumentFromXPath.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="XPaths.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

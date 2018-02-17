@@ -25,7 +25,7 @@ namespace GillSoft.ExpressionEvaluator
         }
 
         public ElementArgs(string prefix, string name)
-            : this(prefix, name, string.Empty)
+            : this(prefix, name, null)
         {
         }
     }

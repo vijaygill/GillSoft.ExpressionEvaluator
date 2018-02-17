@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,8 @@ namespace GillSoft.ExpressionEvaluator.Demo
             try
             {
                 //CheckExpressionParser();
-                CheckXPathParser();
+                CheckXPathParserCreateNewXml();
+                //CheckXPathParserUpdateExistingDocument();
             }
             catch (Exception ex)
             {
@@ -25,59 +27,42 @@ namespace GillSoft.ExpressionEvaluator.Demo
             Console.ReadLine();
         }
 
-        private static void CheckXPathParser()
+        private static void CheckXPathParserUpdateExistingDocument()
         {
             var lines = File.ReadAllLines("XPaths.txt");
             foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
             {
                 try
                 {
-                    var namespaces = new Dictionary<string, string>()
-                    {
-                        { "", ""},
-                        { "ns0", "http://www.gillsoft.ie/cfg/1.0"},
-                        { "ns1", "http://www.gillsoft.ie/cfg/1.1"},
-                    };
-
                     var doc = new XmlDocument();
-                    var currentElement = default(XmlElement);
-
-                    var xpath = new XPathParserVisitor();
-                    xpath.OnElement += (s, e) =>
-                    {
-                        var uri = namespaces[e.Prefix];
-                        if (currentElement == null)
-                        {
-                            var elem = doc.CreateElement(e.Prefix, e.Name, uri);
-                            doc.AppendChild(elem);
-                            currentElement = elem;
-                        }
-                        else
-                        {
-                            var elem = doc.CreateElement(e.Prefix, e.Name, uri);
-                            currentElement.AppendChild(elem);
-                            currentElement = elem;
-                        }
-                        currentElement.InnerText = e.InnerText;
-                    };
-
-                    xpath.OnAttribute += (s, e) =>
-                    {
-                        var uri = namespaces[e.Prefix];
-                        currentElement.SetAttribute(e.Name, uri, e.Value);
-                    };
-
-                    xpath.OnNewPrefix += (s, e) =>
-                    {
-                        var uri = namespaces[e.Prefix];
-                        doc.DocumentElement.SetAttribute("xmlns:" + e.Prefix, uri);
-                    };
-
-                    xpath.Parse(line);
-
-                    Console.WriteLine("XPAth: {0}", line);
+                    doc.Load(@".\SampleUpdateExistingXmlDocumentFromXPath.xml");
+                    var xpath = new XPath();
+                    xpath.UpdateDocument(doc, line);
+                    Console.WriteLine("XPath: {0}", line);
                     Console.WriteLine(doc.Beautify());
+                    Console.WriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception thrown: {0}", ex);
+                    Console.WriteLine("Input: {0}", line);
+                }
+            }
+        }
 
+        private static void CheckXPathParserCreateNewXml()
+        {
+            var lines = File.ReadAllLines("XPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var xpath = new XPath();
+                    var xml = xpath.CreateXml(line);
+                    var doc = new XmlDocument();
+                    doc.LoadXml(xml);
+                    Console.WriteLine("XPath: {0}", line);
+                    Console.WriteLine(doc.Beautify());
                     Console.WriteLine();
                 }
                 catch (Exception ex)

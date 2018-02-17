@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using GillSoft.ExpressionEvaluator.Internals;
 
 namespace GillSoft.ExpressionEvaluator
 {
@@ -12,24 +13,6 @@ namespace GillSoft.ExpressionEvaluator
     {
         public event EventHandler<FunctionArgs> HandleFunction;
         public event EventHandler<VariableArgs> HandleVariable;
-
-        private void HandleFunctionWrapper(FunctionArgs args)
-        {
-            var handler = HandleFunction;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
-        }
-
-        private void HandleVariableWrapper(VariableArgs args)
-        {
-            var handler = HandleVariable;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
-        }
 
         public object Evaluate(string expression)
         {
@@ -44,7 +27,7 @@ namespace GillSoft.ExpressionEvaluator
 
             var tree = parser.expression();
 
-            var visitor = new ExpressionEvalutationVisitor(HandleFunctionWrapper, HandleVariableWrapper);
+            var visitor = new ExpressionEvalutationVisitor((e) => this.InvokeHandler(HandleFunction, e), (e) => this.InvokeHandler(HandleVariable, e));
 
             var res = visitor.Visit(tree);
 

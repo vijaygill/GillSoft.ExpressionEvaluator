@@ -1,12 +1,11 @@
 grammar xpath;
 
-path:
-	(PATHSEP pathElement)+;
+path: (PATHSEP pathElement)+;
 
 pathElement: (axis? element filter?) | attribute;
 
 filter:
-	LBRAC (attr = attribute | elem = element) EQ value = STRING RBRAC;
+	LBRAC (attr = attribute | elem = element) EQ value = string RBRAC;
 
 axis: name = AXIS COLONCOLON;
 
@@ -16,20 +15,38 @@ attribute: AT (ns = namespacePrefix COLON)? name = IDENT;
 
 element: (ns = namespacePrefix COLON)? name = IDENT;
 
+string: stringSingleQuote | stringDoubleQuote;
+stringSingleQuote: '\'' (~'\'')* '\'';
+stringDoubleQuote: '"' (~'"')* '"';
+
 AXIS:
-	'ancestor'
-	| 'ancestor-or-self'
-	| 'attribute'
-	| 'child'
-	| 'descendant'
-	| 'descendant-or-self'
-	| 'following'
-	| 'following-sibling'
-	| 'namespace'
-	| 'parent'
-	| 'preceding'
-	| 'preceding-sibling'
-	| 'self';
+	AXIS_ANCESTOR
+	| AXIS_ANCESTOR_OR_SELF
+	| AXIS_ATTRIBUTE
+	| AXIS_CHILD
+	| AXIS_DESCENDANT
+	| AXIS_DESCENDANT_OR_SELF
+	| AXIS_FOLLOWING
+	| AXIS_FOLLOWNG_SUBLING
+	| AXIS_NAMESPACE
+	| AXIS_PARENT
+	| AXIS_PRECEDING
+	| AXIS_PRECEDING_SIBLING
+	| AXIS_SELF;
+
+AXIS_ANCESTOR: 'ancestor';
+AXIS_ANCESTOR_OR_SELF: 'ancestor-or-self';
+AXIS_ATTRIBUTE: 'attribute';
+AXIS_CHILD: 'child';
+AXIS_DESCENDANT: 'descendant';
+AXIS_DESCENDANT_OR_SELF: 'descendant-or-self';
+AXIS_FOLLOWING: 'following';
+AXIS_NAMESPACE: 'namespace';
+AXIS_PARENT: 'parent';
+AXIS_PRECEDING: 'preceding';
+AXIS_PRECEDING_SIBLING: 'preceding-sibling';
+AXIS_FOLLOWNG_SUBLING: 'following-sibling';
+AXIS_SELF: 'self';
 
 fragment HASH: '#';
 fragment HYPHEN: '-';
@@ -51,6 +68,5 @@ AT: '@';
 EQ: '==' | '=';
 COLON: ':';
 COLONCOLON: '::';
-STRING: '"' ~'"'* '"' | '\'' ~'\''* '\'';
 
 Whitespace: (' ' | '\t' | '\n' | '\r')+ -> skip;
