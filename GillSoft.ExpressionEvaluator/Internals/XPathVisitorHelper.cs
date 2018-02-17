@@ -20,10 +20,22 @@ namespace GillSoft.ExpressionEvaluator
             var uri = nsm.LookupPrefix(prefix);
             if (string.IsNullOrWhiteSpace(uri))
             {
-                uri = string.IsNullOrWhiteSpace(prefix) ?
-                    string.Format(@"http://example.com/namespaces/ns_default")
-                    : string.Format(@"http://example.com/namespaces/ns_{0}", prefix);
-                nsm.AddNamespace(prefix, uri);
+                uri = string.Format(@"http://example.com/namespaces/ns_{0}", prefix);
+                if (string.IsNullOrWhiteSpace(prefix))
+                {
+                    if(string.IsNullOrWhiteSpace(document.NamespaceURI))
+                    {
+                        uri = string.Empty;
+                    }
+                    else
+                    {
+                        uri = @"http://example.com/namespaces/ns_default";
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(uri))
+                {
+                    nsm.AddNamespace(prefix, uri);
+                }
             }
             return uri;
         }
@@ -100,6 +112,7 @@ namespace GillSoft.ExpressionEvaluator
 
             xpathVisitor.OnAxis += (s, e) =>
             {
+                throw new Exception("Axis not supported while adding new elements.");
             };
 
             xpathVisitor.Parse(xath);
@@ -144,6 +157,7 @@ namespace GillSoft.ExpressionEvaluator
 
             xpathVisitor.OnAxis += (s, e) =>
             {
+                throw new Exception("Axis not supported while adding new elements.");
             };
 
             xpathVisitor.Parse(xath);

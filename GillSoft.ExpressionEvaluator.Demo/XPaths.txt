@@ -1,7 +1,7 @@
-﻿#/bookstore/book/title
+﻿/bookstore/book/title
 /a/ns0:b/ns0:c[@ns1:name='some name']/d
 #/bookstore/ns0:book[@ns1:name='some value']/title
-/ns0:Workbook/ns0:Worksheet/ns0:Table/ns0:Row/ns0:Cell[ns0:Data = 'SendPort_BomiReceiver_Address']/following-sibling::ns0:Cell/ns0:Data
-/configuration/connectionStrings/add[@name = 'MessagingDBConnectionString']/@connectionString
+#/ns0:Workbook/ns0:Worksheet/ns0:Table/ns0:Row/ns0:Cell[ns0:Data = 'SendPort_BomiReceiver_Address']/following-sibling::ns0:Cell/ns0:Data
+#/configuration/connectionStrings/add[@name = 'MessagingDBConnectionString']/@connectionString
 #/pubSub3-Properties/add[@key='MSMQTransport.QueueHost']/@value
 #/pubSub3.Properties/add[@key='MSMQTransport.QueueHost']/@value

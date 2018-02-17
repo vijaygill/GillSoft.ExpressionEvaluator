@@ -33,23 +33,9 @@ namespace GillSoft.ExpressionEvaluator
 
         private readonly Dictionary<string, string> namespaces = new Dictionary<string, string>();
 
-        public void Parse(string xpath)
-        {
-            var inputStream = new AntlrInputStream(xpath);
-            var lexer = new xpathLexer(inputStream);
-            var tokenStream = new CommonTokenStream(lexer);
-            var parser = new xpathParser(tokenStream);
+        private bool isRootElement = true;
 
-            parser.RemoveErrorListeners();
-
-            parser.AddErrorListener(this);
-
-            var tree = parser.path();
-
-            var res = this.Visit(tree);
-        }
-
-        private void RaiseNamespacePriefix(string prefix)
+        private void RaiseNamespacePrefixEvent(string prefix)
         {
             if (!string.IsNullOrWhiteSpace(prefix))
             {
@@ -68,13 +54,20 @@ namespace GillSoft.ExpressionEvaluator
 
         public override string VisitAxis([NotNull] xpathParser.AxisContext context)
         {
-            var handler = onAxis;
-            if (handler != null)
+            try
             {
-                var e = new AxisArgs(context.name.Text);
-                handler(e);
+                var handler = onAxis;
+                if (handler != null)
+                {
+                    var e = new AxisArgs(context.name.Text);
+                    handler(e);
+                }
+                return base.VisitAxis(context);
             }
-            return base.VisitAxis(context);
+            catch
+            {
+                throw ExtensionMethods.CreateException(context.name, "While handling axis.");
+            }
         }
 
         public override string VisitFilter([NotNull] xpathParser.FilterContext context)
@@ -86,8 +79,8 @@ namespace GillSoft.ExpressionEvaluator
                 {
                     var e = new AttributeArgs(context.attr.ns.GetTextSafely(),
                         context.attr.name.GetTextSafely(), VisitString(context.value));
+                    RaiseNamespacePrefixEvent(e.Prefix);
                     handler(e);
-                    RaiseNamespacePriefix(e.Prefix);
                 }
             }
             if (context.elem != null)
@@ -103,8 +96,8 @@ namespace GillSoft.ExpressionEvaluator
                     else
                     {
                         var e = new ElementArgs(context.elem.ns.GetTextSafely(), context.elem.name.GetTextSafely(), innerText);
+                        RaiseNamespacePrefixEvent(e.Prefix);
                         handler(e);
-                        RaiseNamespacePriefix(e.Prefix);
                     }
                 }
             }
@@ -113,14 +106,29 @@ namespace GillSoft.ExpressionEvaluator
 
         public override string VisitElement([NotNull] xpathParser.ElementContext context)
         {
-            var handler = onElement;
-            if (handler != null)
+            try
             {
-                var e = new ElementArgs(context.ns.GetTextSafely(), context.name.GetTextSafely());
-                handler(e);
-                RaiseNamespacePriefix(e.Prefix);
+                var handler = onElement;
+                if (handler != null)
+                {
+                    var e = new ElementArgs(context.ns.GetTextSafely(), context.name.GetTextSafely());
+                    if (isRootElement)
+                    {
+                        handler(e);
+                        RaiseNamespacePrefixEvent(e.Prefix);
+                    }
+                    else
+                    {
+                        RaiseNamespacePrefixEvent(e.Prefix);
+                        handler(e);
+                    }
+                }
+                return base.VisitElement(context);
             }
-            return base.VisitElement(context);
+            finally
+            {
+                isRootElement = false;
+            }
         }
 
         public override string VisitStringDoubleQuote([NotNull] xpathParser.StringDoubleQuoteContext context)
@@ -137,7 +145,7 @@ namespace GillSoft.ExpressionEvaluator
 
         public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
-            throw Expression.CreateException(offendingSymbol, msg);
+            throw ExtensionMethods.CreateException(offendingSymbol, msg);
         }
     }
 }

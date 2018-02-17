@@ -43,7 +43,7 @@ namespace GillSoft.ExpressionEvaluator
 
         public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
-            throw Expression.CreateException(offendingSymbol, msg);
+            throw ExtensionMethods.CreateException(offendingSymbol, msg);
         }
 
 

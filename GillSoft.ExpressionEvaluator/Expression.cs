@@ -35,16 +35,9 @@ namespace GillSoft.ExpressionEvaluator
         }
 
 
-        public static Exception CreateException(IToken token, string message)
-        {
-            var exception = string.Format("{0} :{1} Line {2} Column {3}", message, token.Text, token.Line, token.Column);
-            var res = new Exception(exception);
-            return res;
-        }
-
         public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
-            throw CreateException(offendingSymbol, msg);
+            throw ExtensionMethods.CreateException(offendingSymbol, msg);
         }
     }
 }

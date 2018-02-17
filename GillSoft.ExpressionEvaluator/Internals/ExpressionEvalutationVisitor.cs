@@ -95,11 +95,11 @@ namespace GillSoft.ExpressionEvaluator.Internals
                             {
                                 return e.Value;
                             }
-                            throw Expression.CreateException(context.value, "Variable not resolved");
+                            throw ExtensionMethods.CreateException(context.value, "Variable not resolved");
                         }
                         else
                         {
-                            throw Expression.CreateException(context.value, "No handler provided to resolve variable");
+                            throw ExtensionMethods.CreateException(context.value, "No handler provided to resolve variable");
                         }
                     }
             }

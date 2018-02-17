@@ -14,6 +14,13 @@ namespace GillSoft.ExpressionEvaluator
 
     public static class ExtensionMethods
     {
+        internal static Exception CreateException(IToken token, string message)
+        {
+            var exception = string.Format("ERROR: {0} in \"{1}\" at line {2} column {3}", message, token.Text, token.Line, token.Column);
+            var res = new Exception(exception);
+            return res;
+        }
+
         internal static string GetTextSafely(this RuleContext ruleContext)
         {
             var res = ruleContext != null ? ruleContext.GetText() : string.Empty;
