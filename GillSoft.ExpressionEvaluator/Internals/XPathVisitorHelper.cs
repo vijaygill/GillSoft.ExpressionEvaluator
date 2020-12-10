@@ -14,16 +14,37 @@ namespace GillSoft.ExpressionEvaluator
 {
     internal class XPathVisitorHelper
     {
+        private string getDefaultNamespace(XmlDocument doc)
+        {
+            var res = doc.DocumentElement == null ? string.Empty
+                : doc.DocumentElement.Attributes.OfType<XmlAttribute>().Where(a => a.LocalName.Equals("xmlns")).Select(a => a.Value).FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(res))
+            {
+                res = string.Empty;
+            }
+            return res;
+        }
+
         private string getNamespaceOfPrefix(string prefix, XmlDocument document)
         {
+            var desiredAttrName = string.IsNullOrWhiteSpace(prefix) ? "xmlns" : "xmlns:" + prefix;
             var nsm = new XmlNamespaceManager(document.NameTable);
-            var uri = nsm.LookupPrefix(prefix);
+            var uri = nsm.LookupNamespace(prefix);
+            if (string.IsNullOrWhiteSpace(uri) && document.DocumentElement != null)
+            {
+                // try looking using attribute names
+                var xmlnsAttr = document.DocumentElement.Attributes.OfType<XmlAttribute>().FirstOrDefault(a => a.LocalName.Equals("xmlns"));
+                if (xmlnsAttr != null)
+                {
+                    uri = xmlnsAttr.Value;
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(uri))
             {
-                uri = string.Format(@"http://example.com/namespaces/ns_{0}", prefix);
                 if (string.IsNullOrWhiteSpace(prefix))
                 {
-                    if(string.IsNullOrWhiteSpace(document.NamespaceURI))
+                    if (string.IsNullOrWhiteSpace(document.NamespaceURI))
                     {
                         uri = string.Empty;
                     }
@@ -32,15 +53,31 @@ namespace GillSoft.ExpressionEvaluator
                         uri = @"http://example.com/namespaces/ns_default";
                     }
                 }
-                if (!string.IsNullOrWhiteSpace(uri))
+                else
                 {
-                    nsm.AddNamespace(prefix, uri);
+                    uri = @"http://example.com/namespaces/ns_" + prefix;
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(prefix) && !string.IsNullOrWhiteSpace(uri))
+            {
+                nsm.AddNamespace(prefix, uri);
+                if (document.DocumentElement != null)
+                {
+                    var attr = document.DocumentElement.Attributes.OfType<XmlAttribute>().FirstOrDefault(a => a.Name.Equals(desiredAttrName));
+                    if (attr == null)
+                    {
+                        attr = document.CreateAttribute(desiredAttrName);
+                        attr.Value = uri;
+                        document.DocumentElement.Attributes.Append(attr);
+                    }
+                }
+            }
+
             return uri;
         }
 
-        public void UpdateDocument(XmlDocument doc, string xath)
+        public XmlElement UpdateDocumentAndReturnElement(XmlDocument doc, string xath)
         {
             var currentElement = doc.DocumentElement;
             var xpathVisitor = new XPath();
@@ -54,7 +91,6 @@ namespace GillSoft.ExpressionEvaluator
                 {
                     return;
                 }
-                var uri = getNamespaceOfPrefix(e.Prefix, doc);
                 if (isRootElement)
                 {
                     if (doc.DocumentElement != null)
@@ -66,7 +102,9 @@ namespace GillSoft.ExpressionEvaluator
                     else
                     {
                         // root element was null, so append new element to document
-                        var elem = doc.CreateElement(e.Prefix, e.Name, uri);
+                        var uri = getNamespaceOfPrefix(e.Prefix, doc);
+                        var elem = uri.Equals(doc.NamespaceURI) ? doc.CreateElement(e.Name)
+                            : doc.CreateElement(e.Prefix, e.Name, uri);
                         doc.AppendChild(elem);
                         currentElement = elem;
                     }
@@ -75,7 +113,8 @@ namespace GillSoft.ExpressionEvaluator
                 else
                 {
                     // add new element only if current element does not have a child with the same name
-                    var existingChild = currentElement.ChildNodes.OfType<XmlElement>().FirstOrDefault(a => a.LocalName.Equals(e.Name));
+                    var existingChild = currentElement.ChildNodes.OfType<XmlElement>()
+                        .FirstOrDefault(a => a.LocalName.Equals(e.Name) && (!e.Attributes.Any() || a.Attributes.OfType<XmlAttribute>().Any(attr => e.Attributes.ContainsKey(attr.LocalName) && e.Attributes[attr.LocalName].Value.Equals(attr.Value))));
                     if (existingChild != null)
                     {
                         // switch to that child
@@ -83,7 +122,23 @@ namespace GillSoft.ExpressionEvaluator
                     }
                     else
                     {
+                        var uri = getNamespaceOfPrefix(e.Prefix, doc);
                         var elem = doc.CreateElement(e.Prefix, e.Name, uri);
+
+                        if (uri.Equals(getDefaultNamespace(doc)))
+                        {
+                            elem = doc.CreateElement(string.Empty, e.Name, getDefaultNamespace(doc));
+                            var nsm = new XmlNamespaceManager(doc.NameTable);
+                            nsm.AddNamespace(e.Prefix, uri);
+                        }
+                        foreach (var attr in e.Attributes)
+                        {
+                            var attrUri = getNamespaceOfPrefix(attr.Value.Prefix, doc);
+                            var newAttr = elem.OwnerDocument.CreateAttribute(attr.Value.Prefix, attr.Key, attrUri);
+                            newAttr.Value = attr.Value.Value;
+                            elem.Attributes.Append(newAttr);
+                        }
+
                         currentElement.AppendChild(elem);
                         currentElement = elem;
                     }
@@ -117,50 +172,14 @@ namespace GillSoft.ExpressionEvaluator
 
             xpathVisitor.Parse(xath);
 
+            return currentElement;
         }
 
-        public string CreateXml(string xath)
+        public string CreateXml(string xpath)
         {
             var doc = new XmlDocument();
-            var currentElement = default(XmlElement);
 
-            var xpathVisitor = new XPath();
-            xpathVisitor.OnElement += (s, e) =>
-            {
-                var uri = getNamespaceOfPrefix(e.Prefix, doc);
-                if (currentElement == null)
-                {
-                    var elem = doc.CreateElement(e.Prefix, e.Name, uri);
-                    doc.AppendChild(elem);
-                    currentElement = elem;
-                }
-                else
-                {
-                    var elem = doc.CreateElement(e.Prefix, e.Name, uri);
-                    currentElement.AppendChild(elem);
-                    currentElement = elem;
-                }
-                currentElement.InnerText = e.InnerText;
-            };
-
-            xpathVisitor.OnAttribute += (s, e) =>
-            {
-                var uri = getNamespaceOfPrefix(e.Prefix, doc);
-                currentElement.SetAttribute(e.Name, uri, e.Value);
-            };
-
-            xpathVisitor.OnNewPrefix += (s, e) =>
-            {
-                var uri = getNamespaceOfPrefix(e.Prefix, doc);
-                doc.DocumentElement.SetAttribute("xmlns:" + e.Prefix, uri);
-            };
-
-            xpathVisitor.OnAxis += (s, e) =>
-            {
-                throw new Exception("Axis not supported while adding new elements.");
-            };
-
-            xpathVisitor.Parse(xath);
+            UpdateDocumentAndReturnElement(doc, xpath);
 
             return doc.InnerXml;
         }

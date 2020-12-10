@@ -47,10 +47,11 @@ namespace GillSoft.ExpressionEvaluator
         }
 
 
-        public void UpdateDocument(XmlDocument document, string xpath)
+        public XmlElement UpdateDocumentAndReturnElement(XmlDocument document, string xpath)
         {
             var helper = new XPathVisitorHelper();
-            helper.UpdateDocument(document, xpath);
+            var res = helper.UpdateDocumentAndReturnElement(document, xpath);
+            return res;
         }
 
         public string CreateXml(string xpath)

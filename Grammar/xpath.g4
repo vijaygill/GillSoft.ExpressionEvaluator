@@ -2,10 +2,13 @@ grammar xpath;
 
 path: (PATHSEP pathElement)+;
 
-pathElement: (axis? element filter?) | attribute;
+pathElement: ax = axis ? elem = element (LBRAC filt = expression RBRAC)?
+				| attr = attribute;
 
-filter:
-	LBRAC (attr = attribute | elem = element) EQ value = string RBRAC;
+expression: LPAREN subExpr = expression RPAREN
+		| left = expression (AND | OR) right = expression
+		| attr = attribute (NOT_EQ | EQ) value = string
+		| constVal = (TRUE | FALSE);
 
 axis: name = AXIS COLONCOLON;
 
@@ -16,8 +19,17 @@ attribute: AT (ns = namespacePrefix COLON)? name = IDENT;
 element: (ns = namespacePrefix COLON)? name = IDENT;
 
 string: stringSingleQuote | stringDoubleQuote;
+
 stringSingleQuote: '\'' (~'\'')* '\'';
 stringDoubleQuote: '"' (~'"')* '"';
+
+unknowns: Unknown*;
+
+AND: 'and';
+OR: 'or';
+NOT_EQ: '!=';
+TRUE: 'true';
+FALSE: 'false';
 
 AXIS:
 	AXIS_ANCESTOR
@@ -68,5 +80,10 @@ AT: '@';
 EQ: '==' | '=';
 COLON: ':';
 COLONCOLON: '::';
+LPAREN : '(';
+RPAREN : ')';
 
-Whitespace: (' ' | '\t' | '\n' | '\r')+ -> skip;
+WS: (' ' | '\t' ) -> skip;
+Whitespace: ('\n' | '\r') -> skip;
+
+Unknown: .;

@@ -12,18 +12,27 @@ using System.Diagnostics;
 
 namespace GillSoft.ExpressionEvaluator
 {
-
-    public class XPathVisitor : xpathBaseVisitor<string>, IAntlrErrorListener<IToken>
+    internal class XPathVisitor : xpathBaseVisitor<string>, IAntlrErrorListener<IToken>
     {
-        private readonly Action<ElementArgs> onElement;
+
+        #region Private Fields
+
+        private readonly Dictionary<string, string> namespaces = new Dictionary<string, string>();
         private readonly Action<AttributeArgs> onAttribute;
-        private readonly Action<NamespacePrefixArgs> onNewPrefix;
         private readonly Action<AxisArgs> onAxis;
+        private readonly Action<ElementArgs> onElement;
+        private readonly Action<NamespacePrefixArgs> onNewPrefix;
+
+        private bool isRootElement = true;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public XPathVisitor(Action<ElementArgs> onElement,
-         Action<AttributeArgs> onAttribute,
-         Action<NamespacePrefixArgs> onNewPrefix,
-         Action<AxisArgs> onAxis)
+                Action<AttributeArgs> onAttribute,
+                Action<NamespacePrefixArgs> onNewPrefix,
+                Action<AxisArgs> onAxis)
         {
             this.onElement = onElement;
             this.onAttribute = onAttribute;
@@ -31,25 +40,19 @@ namespace GillSoft.ExpressionEvaluator
             this.onAxis = onAxis;
         }
 
-        private readonly Dictionary<string, string> namespaces = new Dictionary<string, string>();
+        #endregion Public Constructors
 
-        private bool isRootElement = true;
+        #region Public Methods
 
-        private void RaiseNamespacePrefixEvent(string prefix)
+        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
-            if (!string.IsNullOrWhiteSpace(prefix))
-            {
-                var handler = onNewPrefix;
-                if (handler != null)
-                {
-                    if (!this.namespaces.ContainsKey(prefix))
-                    {
-                        var e = new NamespacePrefixArgs(prefix);
-                        handler(e);
-                        this.namespaces.Add(e.Prefix, e.Uri);
-                    }
-                }
-            }
+            throw ExtensionMethods.CreateException(offendingSymbol, msg);
+        }
+
+        public override string VisitAttribute([NotNull] xpathParser.AttributeContext context)
+        {
+            var res = context.name.GetTextSafely();
+            return res;
         }
 
         public override string VisitAxis([NotNull] xpathParser.AxisContext context)
@@ -70,7 +73,7 @@ namespace GillSoft.ExpressionEvaluator
             }
         }
 
-        public override string VisitFilter([NotNull] xpathParser.FilterContext context)
+        public override string VisitPathElement([NotNull] xpathParser.PathElementContext context)
         {
             if (context.attr != null)
             {
@@ -78,9 +81,9 @@ namespace GillSoft.ExpressionEvaluator
                 if (handler != null)
                 {
                     var e = new AttributeArgs(context.attr.ns.GetTextSafely(),
-                        context.attr.name.GetTextSafely(), VisitString(context.value));
-                    RaiseNamespacePrefixEvent(e.Prefix);
+                        context.attr.name.GetTextSafely(), string.Empty);
                     handler(e);
+                    return VisitAttribute(context.attr);
                 }
             }
             if (context.elem != null)
@@ -88,64 +91,86 @@ namespace GillSoft.ExpressionEvaluator
                 var handler = onElement;
                 if (handler != null)
                 {
-                    var innerText = VisitString(context.value);
-                    if (string.IsNullOrWhiteSpace(innerText))
+                    var e = new ElementArgs(context.elem.ns.GetTextSafely(), context.elem.name.GetTextSafely());
+                    if (context.ax != null)
                     {
-                        return VisitElement(context.elem);
+                        e.Axis = VisitAxis(context.ax);
                     }
-                    else
+                    if (context.filt != null)
                     {
-                        var e = new ElementArgs(context.elem.ns.GetTextSafely(), context.elem.name.GetTextSafely(), innerText);
-                        RaiseNamespacePrefixEvent(e.Prefix);
-                        handler(e);
-                    }
-                }
-            }
-            return base.VisitFilter(context);
-        }
+                        var attributes = GetAttributes(context.filt).ToList();
+                        
+                        if (context.filt.subExpr != null)
+                        {
+                            attributes.AddRange(GetAttributes(context.filt.subExpr));
+                        }
 
-        public override string VisitElement([NotNull] xpathParser.ElementContext context)
-        {
-            try
-            {
-                var handler = onElement;
-                if (handler != null)
-                {
-                    var e = new ElementArgs(context.ns.GetTextSafely(), context.name.GetTextSafely());
-                    if (isRootElement)
-                    {
-                        handler(e);
-                        RaiseNamespacePrefixEvent(e.Prefix);
+                        foreach (var item in attributes)
+                        {
+                            e.Attributes.Add(item.Name, item);
+                        }
                     }
-                    else
-                    {
-                        RaiseNamespacePrefixEvent(e.Prefix);
-                        handler(e);
-                    }
+                    handler(e);
+                    return base.VisitPathElement(context);
                 }
-                return base.VisitElement(context);
             }
-            finally
-            {
-                isRootElement = false;
-            }
+            return string.Empty;
         }
 
         public override string VisitStringDoubleQuote([NotNull] xpathParser.StringDoubleQuoteContext context)
         {
-            var res = context.ChildCount == 3 ? context.GetChild(1).GetText() : context.GetTextSafely();
+            var res = context.ChildCount == 3 ? context.GetChild(1).GetText() : context.GetTextSafely().DeQuote();
             return res;
         }
 
         public override string VisitStringSingleQuote([NotNull] xpathParser.StringSingleQuoteContext context)
         {
-            var res = context.ChildCount == 3 ? context.GetChild(1).GetText() : context.GetTextSafely();
+            var res = context.ChildCount == 3 ? context.GetChild(1).GetText() : context.GetTextSafely().DeQuote();
             return res;
         }
 
-        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+        #endregion Public Methods
+
+        #region Private Methods
+
+        private AttributeArgs GetAttribute(xpathParser.ExpressionContext context)
         {
-            throw ExtensionMethods.CreateException(offendingSymbol, msg);
+            var res = new AttributeArgs(context.attr.namespacePrefix().GetTextSafely(), context.attr.name.GetTextSafely(), GetValue(context.value));
+            return res;
         }
+
+        private IEnumerable<AttributeArgs> GetAttributes(xpathParser.ExpressionContext context)
+        {
+            var res = new List<AttributeArgs>();
+
+            if (context.left != null)
+            {
+                res.AddRange(GetAttributes(context.left));
+            }
+
+            if (context.right != null)
+            {
+                res.AddRange(GetAttributes(context.right));
+            }
+
+            if (context.attr != null)
+            {
+                res.Add(GetAttribute(context));
+            }
+
+            return res;
+        }
+
+        private string GetValue(xpathParser.StringContext context)
+        {
+            var res = string.Join(string.Empty, context.children.OfType<xpathParser.StringSingleQuoteContext>()
+                .Select(x => VisitStringSingleQuote(x))
+                .Concat(context.children.OfType<xpathParser.StringDoubleQuoteContext>()
+                .Select(x => VisitStringDoubleQuote(x))));
+            return res;
+        }
+
+        #endregion Private Methods
+
     }
 }

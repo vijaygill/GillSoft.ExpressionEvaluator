@@ -14,11 +14,18 @@ namespace GillSoft.ExpressionEvaluator
     public class ElementArgs
     {
         public string Prefix { get; private set; }
+
         public string Name { get; private set; }
+
         public string InnerText { get; set; }
+
+        public string Axis { get; internal set; }
+
+        public Dictionary<string, AttributeArgs> Attributes { get; private set; }
 
         public ElementArgs(string prefix, string name, string innerText)
         {
+            this.Attributes = new Dictionary<string, AttributeArgs>();
             this.Prefix = prefix;
             this.Name = name;
             this.InnerText = innerText;

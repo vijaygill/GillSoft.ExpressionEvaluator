@@ -16,8 +16,9 @@ namespace GillSoft.ExpressionEvaluator.Demo
             try
             {
                 //CheckExpressionParser();
-                CheckXPathParserCreateNewXml();
-                //CheckXPathParserUpdateExistingDocument();
+                //TestParsePaths();
+                //CheckXPathParserCreateNewXml();
+                CheckXPathParserUpdateExistingDocument();
             }
             catch (Exception ex)
             {
@@ -25,6 +26,25 @@ namespace GillSoft.ExpressionEvaluator.Demo
             }
             Console.Write("Press RETURN to close...");
             Console.ReadLine();
+        }
+
+        private static void JustParsePaths()
+        {
+            var lines = File.ReadLines(@"XPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var xpath = new XPath();
+                    xpath.Parse(line);
+                    Console.WriteLine("Success: {0}", line);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed: {0}", line);
+                    Console.WriteLine("      : {0}", ex);
+                }
+            }
         }
 
         private static void CheckXPathParserUpdateExistingDocument()
@@ -37,7 +57,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
                     var doc = new XmlDocument();
                     doc.Load(@".\SampleUpdateExistingXmlDocumentFromXPath.xml");
                     var xpath = new XPath();
-                    xpath.UpdateDocument(doc, line);
+                    xpath.UpdateDocumentAndReturnElement(doc, line);
                     Console.WriteLine("XPath: {0}", line);
                     Console.WriteLine(doc.Beautify());
                     Console.WriteLine();
