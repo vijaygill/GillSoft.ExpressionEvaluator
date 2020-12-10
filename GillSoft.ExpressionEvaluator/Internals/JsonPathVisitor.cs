@@ -64,7 +64,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 if (e.Index > 0)
                 {
                     // add null elements only if there are more than 1 element
-                    for (var i = 0; i < e.Index; i++)
+                    for (var i = 0; i <= e.Index; i++)
                     {
                         currentObject.Values.Add(null);
                     }
@@ -82,7 +82,16 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 else
                 {
                     var newItem = new JsonElement(0, e.Name);
-                    currentObject.Values.Add(newItem);
+                    if (currentObject.IsArray)
+                    {
+                        // replace the last item
+                        currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
+                        currentObject.Values.Add(newItem);
+                    }
+                    else
+                    {
+                        currentObject.Values.Add(newItem);
+                    }
                     currentObject = newItem;
                 }
             };
