@@ -3,3 +3,4 @@ GillSoft.ExpressionEvaluator/AntlrGenerated
 bin
 obj
 packages
+*.user
