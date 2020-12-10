@@ -1,0 +1,9 @@
+﻿$.store.book.title
+$['store']['book']['title']
+$['store']['book'][0]['title']
+$['store'][1]['location'][2]['book'][0]['title']
+$[2]['store'][1]['location'][2]['book'][0]['title']
+$.CorsOrigin[1]
+$.CorsOrigin.['some.property.with.dot']
+$.CorsOrigin.['some.property.with.dot'].Name
+

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -11,87 +12,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
 {
     static class Program
     {
-        static void Main(string[] args)
-        {
-            try
-            {
-                //CheckExpressionParser();
-                //TestParsePaths();
-                //CheckXPathParserCreateNewXml();
-                CheckXPathParserUpdateExistingDocument();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            Console.Write("Press RETURN to close...");
-            Console.ReadLine();
-        }
-
-        private static void JustParsePaths()
-        {
-            var lines = File.ReadLines(@"XPaths.txt");
-            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
-            {
-                try
-                {
-                    var xpath = new XPath();
-                    xpath.Parse(line);
-                    Console.WriteLine("Success: {0}", line);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Failed: {0}", line);
-                    Console.WriteLine("      : {0}", ex);
-                }
-            }
-        }
-
-        private static void CheckXPathParserUpdateExistingDocument()
-        {
-            var lines = File.ReadAllLines("XPaths.txt");
-            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
-            {
-                try
-                {
-                    var doc = new XmlDocument();
-                    doc.Load(@".\SampleUpdateExistingXmlDocumentFromXPath.xml");
-                    var xpath = new XPath();
-                    xpath.UpdateDocumentAndReturnElement(doc, line);
-                    Console.WriteLine("XPath: {0}", line);
-                    Console.WriteLine(doc.Beautify());
-                    Console.WriteLine();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Exception thrown: {0}", ex);
-                    Console.WriteLine("Input: {0}", line);
-                }
-            }
-        }
-
-        private static void CheckXPathParserCreateNewXml()
-        {
-            var lines = File.ReadAllLines("XPaths.txt");
-            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
-            {
-                try
-                {
-                    var xpath = new XPath();
-                    var xml = xpath.CreateXml(line);
-                    var doc = new XmlDocument();
-                    doc.LoadXml(xml);
-                    Console.WriteLine("XPath: {0}", line);
-                    Console.WriteLine(doc.Beautify());
-                    Console.WriteLine();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Exception thrown: {0}", ex);
-                    Console.WriteLine("Input: {0}", line);
-                }
-            }
-        }
+        #region Private Methods
 
         private static void CheckExpressionParser()
         {
@@ -170,5 +91,138 @@ namespace GillSoft.ExpressionEvaluator.Demo
                 }
             }
         }
+
+        private static void CheckJsonPathParserCreateNewObject()
+        {
+            var lines = File.ReadAllLines("JsonPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var jsonPath = new JsonPath();
+                    var jsonResult = jsonPath.CreateJson(line);
+                    Console.WriteLine("JsonPath: {0}", line);
+                    Console.WriteLine("Json    : {0}", jsonResult.Json);
+                    JContainer obj = jsonResult.IsTopLevelArray ? JArray.Parse(jsonResult.Json) as JContainer : JObject.Parse(jsonResult.Json) as JContainer;
+                    foreach (var item in obj.SelectTokens(line))
+                    {
+                        item.Replace("apples");
+                    }
+                    Console.WriteLine("Json formatted ******************************************");
+                    Console.WriteLine(obj.ToString(Newtonsoft.Json.Formatting.Indented));
+                    Console.WriteLine("Json formatted ******************************************");
+                    Console.WriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception thrown: {0}", ex);
+                    Console.WriteLine("Input: {0}", line);
+                }
+            }
+        }
+
+        private static void CheckXPathParserCreateNewXml()
+        {
+            var lines = File.ReadAllLines("XPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var xpath = new XPath();
+                    var xml = xpath.CreateXml(line);
+                    var doc = new XmlDocument();
+                    doc.LoadXml(xml);
+                    Console.WriteLine("XPath: {0}", line);
+                    Console.WriteLine(doc.Beautify());
+                    Console.WriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception thrown: {0}", ex);
+                    Console.WriteLine("Input: {0}", line);
+                }
+            }
+        }
+
+        private static void CheckXPathParserUpdateExistingDocument()
+        {
+            var lines = File.ReadAllLines("XPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var doc = new XmlDocument();
+                    doc.Load(@".\SampleUpdateExistingXmlDocumentFromXPath.xml");
+                    var xpath = new XPath();
+                    xpath.UpdateDocumentAndReturnElement(doc, line);
+                    Console.WriteLine("XPath: {0}", line);
+                    Console.WriteLine(doc.Beautify());
+                    Console.WriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception thrown: {0}", ex);
+                    Console.WriteLine("Input: {0}", line);
+                }
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            try
+            {
+                //CheckExpressionParser();
+                //TestParseXPaths();
+                //CheckXPathParserCreateNewXml();
+                //CheckXPathParserUpdateExistingDocument();
+                TestParseJsonPaths();
+                CheckJsonPathParserCreateNewObject();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            Console.Write("Press RETURN to close...");
+            Console.ReadLine();
+        }
+        private static void TestParseJsonPaths()
+        {
+            var lines = File.ReadLines(@"JsonPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var xpath = new JsonPath();
+                    xpath.Parse(line);
+                    Console.WriteLine("Success: {0}", line);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed: {0}", line);
+                    Console.WriteLine("      : {0}", ex);
+                }
+            }
+        }
+
+        private static void TestParseXPaths()
+        {
+            var lines = File.ReadLines(@"XPaths.txt");
+            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
+            {
+                try
+                {
+                    var xpath = new XPath();
+                    xpath.Parse(line);
+                    Console.WriteLine("Success: {0}", line);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed: {0}", line);
+                    Console.WriteLine("      : {0}", ex);
+                }
+            }
+        }
+
+        #endregion Private Methods
     }
 }

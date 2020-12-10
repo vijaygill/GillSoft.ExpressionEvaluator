@@ -12,53 +12,46 @@ using System.Diagnostics;
 
 namespace GillSoft.ExpressionEvaluator
 {
-    public class XPath : IAntlrErrorListener<IToken>
+    public class XPath
     {
-        public event EventHandler<ElementArgs> OnElement;
+
+        #region Public Events
+
         public event EventHandler<AttributeArgs> OnAttribute;
-        public event EventHandler<NamespacePrefixArgs> OnNewPrefix;
+
         public event EventHandler<AxisArgs> OnAxis;
+
+        public event EventHandler<ElementArgs> OnElement;
+        
+        public event EventHandler<NamespacePrefixArgs> OnNewPrefix;
+
+        #endregion Public Events
+
+        #region Public Methods
+
+        public string CreateXml(string xpath)
+        {
+            var res = XPathVisitor.CreateXml(xpath);
+            return res;
+        }
 
         public void Parse(string xpath)
         {
-            var inputStream = new AntlrInputStream(xpath);
-            var lexer = new xpathLexer(inputStream);
-            var tokenStream = new CommonTokenStream(lexer);
-            var parser = new xpathParser(tokenStream);
-
-            parser.RemoveErrorListeners();
-
-            parser.AddErrorListener(this);
-
-            var tree = parser.path();
-
             var visitor = new XPathVisitor((e) => this.InvokeHandler(OnElement, e),
                 (e) => this.InvokeHandler(OnAttribute, e),
                 (e) => this.InvokeHandler(OnNewPrefix, e),
                 (e) => this.InvokeHandler(OnAxis, e)
             );
-
-            visitor.Visit(tree);
+            visitor.Parse(xpath);
         }
-
-        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
-        {
-            throw ExtensionMethods.CreateException(offendingSymbol, msg);
-        }
-
 
         public XmlElement UpdateDocumentAndReturnElement(XmlDocument document, string xpath)
         {
-            var helper = new XPathVisitorHelper();
-            var res = helper.UpdateDocumentAndReturnElement(document, xpath);
+            var res = XPathVisitor.UpdateDocumentAndReturnElement(document, xpath);
             return res;
         }
 
-        public string CreateXml(string xpath)
-        {
-            var helper = new XPathVisitorHelper();
-            var res = helper.CreateXml(xpath);
-            return res;
-        }
+        #endregion Public Methods
+
     }
 }

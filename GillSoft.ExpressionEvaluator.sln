@@ -1,13 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GillSoft.ExpressionEvaluator", "GillSoft.ExpressionEvaluator\GillSoft.ExpressionEvaluator.csproj", "{07B52339-4B19-48B0-B132-25FF016ADDD3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GillSoft.ExpressionEvaluator.Demo", "GillSoft.ExpressionEvaluator.Demo\GillSoft.ExpressionEvaluator.Demo.csproj", "{A48BC42F-CBC0-40EE-8B17-36BF18A37E4F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GillSoft.ExpressionEvaluator.Tests", "GillSoft.ExpressionEvaluator.Tests\GillSoft.ExpressionEvaluator.Tests.csproj", "{6A9FEEAD-F293-4704-9C37-DEA6BF710FD0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{1C00A8EC-543C-4C00-93B1-E791736FAC24}"
+	ProjectSection(SolutionItems) = preProject
+		Grammar\build.cmd = Grammar\build.cmd
+		Grammar\Expression.g4 = Grammar\Expression.g4
+		Grammar\JsonPath.g4 = Grammar\JsonPath.g4
+		Grammar\xpath.g4 = Grammar\xpath.g4
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +38,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9D483B77-C058-433D-9E91-4ECE6B9E07DB}
 	EndGlobalSection
 EndGlobal
