@@ -61,9 +61,13 @@ namespace GillSoft.ExpressionEvaluator.Internals
                     currentObject.IsArray = true;
                 }
 
-                for (var i = 0; i <= e.Index; i++)
+                if (e.Index > 0)
                 {
-                    currentObject.Values.Add(null);
+                    // add null elements only if there are more than 1 element
+                    for (var i = 0; i < e.Index; i++)
+                    {
+                        currentObject.Values.Add(null);
+                    }
                 }
             };
 
