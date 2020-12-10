@@ -1,1 +1,5 @@
 GillSoft.ExpressionEvaluator/AntlrGenerated
+.vs
+bin
+obj
+packages
