@@ -15,11 +15,12 @@ namespace GillSoft.ExpressionEvaluator.Tests
             {"false || false", false},
             {"true && true", true},
             {"true && false", false},
+            {"true && !false", true},
             {"false && true", false},
             {"false && false", false},
             {"true && (false || true)", true},
             {"true && !(false || true)", false},
-
+            {"true && (!false || false)", true},
             {"true && !(false || NotFunc(true))", true},
         };
 
@@ -54,6 +55,8 @@ namespace GillSoft.ExpressionEvaluator.Tests
             { "10 - (4 - 25) * 4 / 2", 52},
 
             { "25 * 4 / (2 + 10 - 8) ", 25},
+
+            { "25 * 4 / 2 + 10", 60},
 
         };
 
