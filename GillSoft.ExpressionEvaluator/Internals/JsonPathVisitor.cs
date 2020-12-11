@@ -85,7 +85,10 @@ namespace GillSoft.ExpressionEvaluator.Internals
                     if (currentObject.IsArray)
                     {
                         // replace the last item
-                        currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
+                        if (currentObject.Values.Any())
+                        {
+                            currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
+                        }
                         currentObject.Values.Add(newItem);
                     }
                     else
