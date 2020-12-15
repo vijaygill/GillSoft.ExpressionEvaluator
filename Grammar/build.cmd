@@ -14,6 +14,8 @@ java -jar %JAR% ..\Grammar\Expression.g4 -no-listener -Dlanguage=CSharp -visitor
 java -jar %JAR% ..\Grammar\xpath.g4 -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
 java -jar %JAR% ..\Grammar\JsonPath.g4 -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
 
+if exist "%src_path%\.antlr" rd /s /q "%src_path%\.antlr"
+
 move "%src_path%*.cs" "%dest_path%"
 del "%src_path%*.interp"
 del "%src_path%*.tokens"
