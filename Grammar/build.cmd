@@ -10,9 +10,10 @@ if not exist %dest_path% mkdir %dest_path%
 set JAR=..\tools\antlr-4.9-complete.jar
 set NAMESPACE=GillSoft.ExpressionEvaluator
 
-java -jar %JAR% ..\Grammar\Expression.g4 -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
-java -jar %JAR% ..\Grammar\xpath.g4 -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
-java -jar %JAR% ..\Grammar\JsonPath.g4 -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
+for %%a in (Expression.g4 xpath.g4 JsonPath.g4 ) do (
+	echo Processing %%a...
+	java -jar %JAR% ..\Grammar\%%a -no-listener -Dlanguage=CSharp -visitor -o ./ -package %NAMESPACE%
+)
 
 if exist "%src_path%\.antlr" rd /s /q "%src_path%\.antlr"
 
