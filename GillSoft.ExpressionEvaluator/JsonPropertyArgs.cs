@@ -21,7 +21,7 @@ namespace GillSoft.ExpressionEvaluator
 
         #region Public Properties
 
-        public int? Index { get; }
+        public int? Index { get; private set; }
 
         public string Name { get; private set; }
 
