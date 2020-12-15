@@ -24,7 +24,7 @@ propertyNameQuoted: INDENTIFIER ( (DOT | HYPHEN | COLON) INDENTIFIER )*;
 
 propertyNameSimple : INDENTIFIER;
 
-INDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
+INDENTIFIER : [a-zA-Z] ~( '.' | '"' | '\'' | '[' | ']' )* ;
 INT         : [0-9]+ ;
 DOT			: '.';
 DOLLAR		: '$';

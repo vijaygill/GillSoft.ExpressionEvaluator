@@ -41,25 +41,17 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             var currentObject = default(JsonElement);
 
-            var isTopLevelArray = false;
-
             Action<JsonRootItemArgs> onRootElement = (e) =>
             {
-                isTopLevelArray = e.IsArray;
+                var newItem = new JsonElement(0, string.Empty);
+                rootObject = newItem;
+                currentObject = newItem;
+                rootObject.IsArray = e.IsArray;
             };
 
             Action<JsonArrayItemArgs> onArrayItem = (e) =>
             {
-                if (rootObject == null)
-                {
-                    var newItem = new JsonElement(0, string.Empty);
-                    rootObject = newItem;
-                    currentObject = newItem;
-                }
-                else
-                {
-                    currentObject.IsArray = true;
-                }
+                currentObject.IsArray = true;
 
                 if (e.Index > 0)
                 {
@@ -73,30 +65,21 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             Action<JsonPropertyArgs> onProperty = (e) =>
             {
-                if (rootObject == null)
+                var newItem = new JsonElement(0, e.Name);
+                if (currentObject.IsArray)
                 {
-                    var newItem = new JsonElement(0, e.Name);
-                    rootObject = newItem;
-                    currentObject = newItem;
+                    // replace the last item
+                    if (currentObject.Values.Any())
+                    {
+                        currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
+                    }
+                    currentObject.Values.Add(newItem);
                 }
                 else
                 {
-                    var newItem = new JsonElement(0, e.Name);
-                    if (currentObject.IsArray)
-                    {
-                        // replace the last item
-                        if (currentObject.Values.Any())
-                        {
-                            currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
-                        }
-                        currentObject.Values.Add(newItem);
-                    }
-                    else
-                    {
-                        currentObject.Values.Add(newItem);
-                    }
-                    currentObject = newItem;
+                    currentObject.Values.Add(newItem);
                 }
+                currentObject = newItem;
             };
 
             var jsonPathImpl = new JsonPathVisitor(onRootElement, onProperty, onArrayItem);
@@ -104,8 +87,9 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             jsonPathImpl.Parse(jsonPath);
 
-            var json = rootObject.GetJson(isTopLevelArray);
-            var res = new JsonPathParsedResult(json, isTopLevelArray);
+            var json = rootObject.GetJson(true);
+            var res = new JsonPathParsedResult(json, rootObject.IsArray
+                );
             return res;
         }
 
@@ -259,11 +243,11 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             #region Public Methods
 
-            public string GetJson(bool istopLevelArray)
+            public string GetJson(bool isRoot)
             {
 
                 var res = string.Empty;
-                if (istopLevelArray)
+                if (isRoot && IsArray)
                 {
                     res = res + "[";
                 }
@@ -274,7 +258,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
                     res += "\"" + this.Name + "\":";
                 }
 
-                if (IsArray)
+                if (!isRoot && IsArray)
                 {
                     res += "[";
                 }
@@ -289,11 +273,10 @@ namespace GillSoft.ExpressionEvaluator.Internals
                     res += string.Join(", ", this.Values.Select(v => v == null ? "null" : v.GetJson(false)));
                 }
 
-                if (IsArray)
+                if (!isRoot && IsArray)
                 {
                     res += "]";
                 }
-
 
                 if (!string.IsNullOrWhiteSpace(this.Name))
                 {
@@ -301,7 +284,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 }
 
 
-                if (istopLevelArray)
+                if (isRoot && IsArray)
                 {
                     res = res + "]";
                 }
