@@ -14,11 +14,9 @@ namespace GillSoft.ExpressionEvaluator
 
         #region Public Events
 
-        public event EventHandler<JsonArrayItemArgs> OnArrayItem;
-
         public event EventHandler<JsonPropertyArgs> OnProperty;
 
-        public event EventHandler<JsonRootItemArgs> OnRootElement;
+        public event EventHandler<JsonPropertyArgs> OnRootElement;
 
         #endregion Public Events
 
@@ -28,15 +26,6 @@ namespace GillSoft.ExpressionEvaluator
         {
             var res = JsonPathVisitor.CreateJson(jsonPath);
             return res;
-        }
-
-        public void Parse(string jsonPath)
-        {
-            var visitor = new JsonPathVisitor(
-                (e) => this.InvokeHandler(this.OnRootElement, e),
-                (e) => this.InvokeHandler(this.OnProperty, e),
-                (e) => this.InvokeHandler(this.OnArrayItem, e));
-            visitor.Parse(jsonPath);
         }
 
         #endregion Public Methods

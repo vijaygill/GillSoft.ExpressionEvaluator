@@ -1,33 +1,23 @@
 grammar JsonPath;
 
-jsonpath: rootItem ref+;
-
-ref : (arrayItem | property);
-
-rootItem : (rootItemArrayItem | rootItemSimple);
-
-rootItemArrayItem: DOLLAR arrayIndex;
-
-rootItemSimple: DOLLAR;
-
-arrayItem: prop = property arrayIndex ;
-
-property : (propertyQuoted) | (propertySimple);
-
-propertyQuoted: ( DOT? '[\'' name = propertyNameQuoted '\']' );
-
-propertySimple: DOT name = propertyNameSimple;
+jsonpath : rootItem property+;
 
 arrayIndex : '[' index = INT ']';
 
-propertyNameQuoted: INDENTIFIER ( (DOT | HYPHEN | COLON) INDENTIFIER )*;
+rootItem : DOLLAR (index = arrayIndex?);
 
-propertyNameSimple : INDENTIFIER;
+property : (propertyInBrackets = PROPERTY_IN_BRACKETS | propertyWithDot = PROPERTY_WITH_DOT) (index = arrayIndex?);
 
-INDENTIFIER : [a-zA-Z] ~( '.' | '"' | '\'' | '[' | ']' )* ;
-INT         : [0-9]+ ;
-DOT			: '.';
-DOLLAR		: '$';
-HYPHEN		: '-';
-COLON		: ':';
-WS  :   [ \t\n\r]+ -> skip ;
+PROPERTY_IN_BRACKETS : (BRACKET_SQ_L QUOTE_S) ( ~( '"' | '\'' | '[' | ']')*) (QUOTE_S BRACKET_SQ_R);
+PROPERTY_WITH_DOT : DOT ( ~( '.' | '"' | '\'' | '[' | ']')*);
+
+INDENTIFIER  : [a-zA-Z] ~( '.' | '"' | '\'' | '[' | ']')*;
+INT          : [0-9]+;
+BRACKET_SQ_L : '[';
+BRACKET_SQ_R : ']';
+QUOTE_S      : '\'';
+DOT          : '.';
+DOLLAR       : '$';
+HYPHEN       : '-';
+COLON        : ':';
+WS           : [ \t\n\r]+ -> skip;

@@ -14,21 +14,18 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
         #region Private Fields
 
-        private readonly Action<JsonArrayItemArgs> onArrayItem;
         private readonly Action<JsonPropertyArgs> onProperty;
-        private readonly Action<JsonRootItemArgs> onRootElement;
+        private readonly Action<JsonPropertyArgs> onRootElement;
 
         #endregion Private Fields
 
         #region Public Constructors
 
-        public JsonPathVisitor(Action<JsonRootItemArgs> onRootElement,
-            Action<JsonPropertyArgs> onProperty,
-            Action<JsonArrayItemArgs> onArrayItem)
+        public JsonPathVisitor(Action<JsonPropertyArgs> onRootElement,
+            Action<JsonPropertyArgs> onProperty)
         {
             this.onRootElement = onRootElement;
             this.onProperty = onProperty;
-            this.onArrayItem = onArrayItem;
         }
 
         #endregion Public Constructors
@@ -37,38 +34,40 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
         public static JsonPathParsedResult CreateJson(string jsonPath)
         {
-            var rootObject = default(JsonElement);
+            var rootObject = default(JsonPathElement);
 
-            var currentObject = default(JsonElement);
+            var currentObject = default(JsonPathElement);
 
-            Action<JsonRootItemArgs> onRootElement = (e) =>
+            Action<JsonPropertyArgs> onRootElement = (e) =>
             {
-                var newItem = new JsonElement(0, string.Empty);
+                var newItem = new JsonPathElement(string.Empty);
                 rootObject = newItem;
-                currentObject = newItem;
-                rootObject.IsArray = e.IsArray;
-            };
-
-            Action<JsonArrayItemArgs> onArrayItem = (e) =>
-            {
-                currentObject.IsArray = true;
-
-                if (e.Index > 0)
+                if (e.Index.HasValue)
                 {
-                    // add null elements only if there are more than 1 element
-                    for (var i = 0; i <= e.Index; i++)
+                    newItem.IsArray = e.Index.HasValue;
+                    for (var i = 0; i <= e.Index.Value; i++)
                     {
-                        currentObject.Values.Add(null);
+                        newItem.Values.Add(null);
                     }
                 }
+                currentObject = newItem;
             };
 
             Action<JsonPropertyArgs> onProperty = (e) =>
             {
-                var newItem = new JsonElement(0, e.Name);
+                var newItem = new JsonPathElement(e.Name);
+                if (e.Index.HasValue)
+                {
+                    newItem.IsArray = e.Index.HasValue;
+                    for (var i = 0; i <= e.Index.Value; i++)
+                    {
+                        newItem.Values.Add(null);
+                    }
+                }
+
                 if (currentObject.IsArray)
                 {
-                    // replace the last item
+                    // replace the last item of current item's values
                     if (currentObject.Values.Any())
                     {
                         currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
@@ -82,14 +81,12 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 currentObject = newItem;
             };
 
-            var jsonPathImpl = new JsonPathVisitor(onRootElement, onProperty, onArrayItem);
-
+            var jsonPathImpl = new JsonPathVisitor(onRootElement, onProperty);
 
             jsonPathImpl.Parse(jsonPath);
 
             var json = rootObject.GetJson(true);
-            var res = new JsonPathParsedResult(json, rootObject.IsArray
-                );
+            var res = new JsonPathParsedResult(json, rootObject.IsArray);
             return res;
         }
 
@@ -106,8 +103,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             var visitor = new JsonPathVisitor(
                 (e) => this.InvokeHandler(this.onRootElement, e),
-                (e) => this.InvokeHandler(this.onProperty, e),
-                (e) => this.InvokeHandler(this.onArrayItem, e));
+                (e) => this.InvokeHandler(this.onProperty, e));
 
             parser.AddErrorListener(visitor);
 
@@ -121,109 +117,134 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
         public override string VisitArrayIndex([NotNull] JsonPathParser.ArrayIndexContext context)
         {
-            try
-            {
-                var handler = onArrayItem;
-                if (handler != null)
-                {
-                    var e = new JsonArrayItemArgs(context.index.GetTextSafely().ToInt());
-                    handler(e);
-                }
-                return base.VisitArrayIndex(context);
-            }
-            catch
-            {
-                throw ExtensionMethods.CreateException(context.GetTextSafely(), "While handling array item.");
-            }
+            var res = context.index.GetTextSafely();
+            return res;
         }
 
-        public override string VisitPropertyNameQuoted([NotNull] JsonPathParser.PropertyNameQuotedContext context)
+        public override string VisitProperty([NotNull] JsonPathParser.PropertyContext context)
         {
-            var propertyName = context.GetTextSafely();
+            var propertyName = context.propertyWithDot != null
+                ? GetPropertyWithDotName(context.propertyWithDot.GetTextSafely())
+                : context.propertyInBrackets != null
+                ? GetPropertyWithBracketsName(context.propertyInBrackets.GetTextSafely())
+                : string.Empty;
+
             try
             {
+                var index = context.index != null
+                    ? this.VisitArrayIndex(context.index).ToInt()
+                    : default(int?);
+
                 var handler = onProperty;
                 if (handler != null)
                 {
-                    var e = new JsonPropertyArgs(propertyName);
+                    var e = new JsonPropertyArgs(propertyName, index);
                     handler(e);
                 }
                 return propertyName;
             }
             catch
             {
-                throw ExtensionMethods.CreateException(propertyName, "While handling property(quoted).");
+                throw ExtensionMethods.CreateException(propertyName, "While handling property.");
             }
         }
 
-        public override string VisitPropertyNameSimple([NotNull] JsonPathParser.PropertyNameSimpleContext context)
+        public override string VisitRootItem([NotNull] JsonPathParser.RootItemContext context)
         {
-            var propertyName = context.GetTextSafely();
-            try
-            {
-                var handler = onProperty;
-                if (handler != null)
-                {
-                    var e = new JsonPropertyArgs(propertyName);
-                    handler(e);
-                }
-                return propertyName;
-            }
-            catch
-            {
-                throw ExtensionMethods.CreateException(propertyName, "While handling property(simple).");
-            }
-        }
+            var propertyName = string.Empty;
 
-        public override string VisitRootItemArrayItem([NotNull] JsonPathParser.RootItemArrayItemContext context)
-        {
             try
             {
+                var index = context.index != null
+                    ? this.VisitArrayIndex(context.index).ToInt()
+                    : default(int?);
+
                 var handler = onRootElement;
                 if (handler != null)
                 {
-                    var e = new JsonRootItemArgs(true);
+                    var e = new JsonPropertyArgs(propertyName, index);
                     handler(e);
                 }
-                return base.VisitRootItemArrayItem(context);
+                return base.VisitRootItem(context);
             }
             catch
             {
-                throw ExtensionMethods.CreateException(context.GetTextSafely(), "While handling array item.");
-            }
-        }
-
-        public override string VisitRootItemSimple([NotNull] JsonPathParser.RootItemSimpleContext context)
-        {
-            try
-            {
-                var handler = onRootElement;
-                if (handler != null)
-                {
-                    var e = new JsonRootItemArgs(false);
-                    handler(e);
-                }
-                return base.VisitRootItemSimple(context);
-            }
-            catch
-            {
-                throw ExtensionMethods.CreateException(context.GetTextSafely(), "While handling array item.");
+                throw ExtensionMethods.CreateException(propertyName, "While handling root item.");
             }
         }
 
         #endregion Public Methods
 
+        #region Private Methods
+
+        private string GetPropertyWithBracketsName(string name)
+        {
+            var stringsToRemoveInBeginning = new[]
+            {
+                @"['"
+            };
+            var stringsToRemoveInEnd = new[]
+            {
+                @"']"
+            };
+
+            var res = name;
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                foreach (var item in stringsToRemoveInBeginning)
+                {
+                    if (name.StartsWith(item))
+                    {
+                        name = name.Substring(item.Length);
+                    }
+                }
+                foreach (var item in stringsToRemoveInEnd)
+                {
+                    if (name.EndsWith(item))
+                    {
+                        name = name.Substring(0, name.Length - item.Length);
+                    }
+                }
+                res = name;
+            }
+            return res;
+        }
+
+        private string GetPropertyWithDotName(string name)
+        {
+            var stringsToRemoveInBeginning = new[]
+            {
+                @"."
+            };
+            var res = name;
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                foreach (var item in stringsToRemoveInBeginning)
+                {
+                    if (name.StartsWith(item))
+                    {
+                        name = name.Substring(item.Length);
+                    }
+                }
+                res = name;
+            }
+            return res;
+        }
+
+        #endregion Private Methods
+
         #region Private Classes
 
-        private class JsonElement
+        private class JsonPathElement
         {
 
             #region Public Constructors
 
-            public JsonElement(int level, string name)
+            public JsonPathElement(string name)
             {
-                this.Values = new List<JsonElement>();
-                Level = level;
+                this.Values = new List<JsonPathElement>();
                 Name = name;
             }
 
@@ -233,11 +254,9 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             public bool IsArray { get; set; }
 
-            public int Level { get; private set; }
-
             public string Name { get; private set; }
 
-            public List<JsonElement> Values { get; private set; }
+            public List<JsonPathElement> Values { get; private set; }
 
             #endregion Public Properties
 

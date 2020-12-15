@@ -12,6 +12,7 @@ namespace GillSoft.ExpressionEvaluator.Demo
 {
     static class Program
     {
+
         #region Private Methods
 
         private static void CheckExpressionParser()
@@ -175,7 +176,6 @@ namespace GillSoft.ExpressionEvaluator.Demo
                 //TestParseXPaths();
                 //CheckXPathParserCreateNewXml();
                 //CheckXPathParserUpdateExistingDocument();
-                TestParseJsonPaths();
                 CheckJsonPathParserCreateNewObject();
             }
             catch (Exception ex)
@@ -184,24 +184,6 @@ namespace GillSoft.ExpressionEvaluator.Demo
             }
             Console.Write("Press RETURN to close...");
             Console.ReadLine();
-        }
-        private static void TestParseJsonPaths()
-        {
-            var lines = File.ReadLines(@"JsonPaths.txt");
-            foreach (var line in lines.Where(a => !string.IsNullOrWhiteSpace(a) && !a.StartsWith("#")))
-            {
-                try
-                {
-                    var xpath = new JsonPath();
-                    xpath.Parse(line);
-                    Console.WriteLine("Success: {0}", line);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Failed: {0}", line);
-                    Console.WriteLine("      : {0}", ex);
-                }
-            }
         }
 
         private static void TestParseXPaths()
@@ -224,5 +206,6 @@ namespace GillSoft.ExpressionEvaluator.Demo
         }
 
         #endregion Private Methods
+
     }
 }

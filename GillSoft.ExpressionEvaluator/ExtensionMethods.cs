@@ -121,9 +121,11 @@ namespace GillSoft.ExpressionEvaluator
             }
         }
 
-        internal static int ToInt(this string value)
+        internal static int? ToInt(this string value)
         {
-            var res = int.Parse(value, CultureInfo.CurrentCulture);
+            var res = string.IsNullOrWhiteSpace(value)
+                ? default(int?)
+                : int.Parse(value, CultureInfo.CurrentCulture);
             return res;
         }
 

@@ -11,18 +11,20 @@ namespace GillSoft.ExpressionEvaluator
 
         #region Internal Constructors
 
-        internal JsonPropertyArgs(string name)
+        internal JsonPropertyArgs(string name, int? index)
         {
             Name = name;
+            Index = index;
         }
 
         #endregion Internal Constructors
 
         #region Public Properties
 
+        public int? Index { get; }
+
         public string Name { get; private set; }
 
         #endregion Public Properties
-
     }
 }
