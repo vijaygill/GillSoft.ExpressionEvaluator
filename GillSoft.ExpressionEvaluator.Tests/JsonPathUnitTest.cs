@@ -12,7 +12,8 @@ namespace GillSoft.ExpressionEvaluator.Tests
     {
         #region Private Fields
 
-        private string[] testCases = File.ReadAllLines(@"JsonPaths.txt");
+        private string[] testCases = File.ReadAllLines(@"JsonPaths.txt")
+            .Where(line => !line.StartsWith("#")).ToArray();
 
         //private List<string> testCases = new List<string>
         //{

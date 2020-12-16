@@ -40,44 +40,15 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             Action<JsonPropertyArgs> onRootElement = (e) =>
             {
-                var newItem = new JsonPathElement(string.Empty);
+                var newItem = new JsonPathElement(string.Empty, e.Index);
                 rootObject = newItem;
-                if (e.Index.HasValue)
-                {
-                    newItem.IsArray = e.Index.HasValue;
-                    for (var i = 0; i <= e.Index.Value; i++)
-                    {
-                        newItem.Values.Add(null);
-                    }
-                }
                 currentObject = newItem;
             };
 
             Action<JsonPropertyArgs> onProperty = (e) =>
             {
-                var newItem = new JsonPathElement(e.Name);
-                if (e.Index.HasValue)
-                {
-                    newItem.IsArray = e.Index.HasValue;
-                    for (var i = 0; i <= e.Index.Value; i++)
-                    {
-                        newItem.Values.Add(null);
-                    }
-                }
-
-                if (currentObject.IsArray)
-                {
-                    // replace the last item of current item's values
-                    if (currentObject.Values.Any())
-                    {
-                        currentObject.Values.RemoveAt(currentObject.Values.Count - 1);
-                    }
-                    currentObject.Values.Add(newItem);
-                }
-                else
-                {
-                    currentObject.Values.Add(newItem);
-                }
+                var newItem = new JsonPathElement(e.Name, e.Index);
+                currentObject.Value = newItem;
                 currentObject = newItem;
             };
 
@@ -85,8 +56,8 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             jsonPathImpl.Parse(jsonPath);
 
-            var json = rootObject.GetJson(true);
-            var res = new JsonPathParsedResult(json, rootObject.IsArray);
+            var json = rootObject.GetJson();
+            var res = new JsonPathParsedResult(json, rootObject.Index.HasValue);
             return res;
         }
 
@@ -242,70 +213,62 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             #region Public Constructors
 
-            public JsonPathElement(string name)
+            public JsonPathElement(string name, int? index)
             {
-                this.Values = new List<JsonPathElement>();
                 Name = name;
+                Index = index;
             }
 
             #endregion Public Constructors
 
             #region Public Properties
 
-            public bool IsArray { get; set; }
+            public int? Index { get; private set; }
 
             public string Name { get; private set; }
-
-            public List<JsonPathElement> Values { get; private set; }
+            public JsonPathElement Value { get; set; }
 
             #endregion Public Properties
 
             #region Public Methods
 
-            public string GetJson(bool isRoot)
+            public string GetJson()
             {
-
                 var res = string.Empty;
-                if (isRoot && IsArray)
-                {
-                    res = res + "[";
-                }
 
                 if (!string.IsNullOrWhiteSpace(this.Name))
                 {
-                    res = res + "{";
+                    res += "{";
                     res += "\"" + this.Name + "\":";
                 }
 
-                if (!isRoot && IsArray)
+                if (this.Index.HasValue)
                 {
                     res += "[";
+                    if (Index.Value > 0)
+                    {
+                        res += string.Join(", ", Enumerable.Range(0, this.Index.Value).Select(x => "null"))
+                            + ",";
+                    }
                 }
 
-                if (!this.Values.Any())
+                if (Value == null)
                 {
                     res += "null";
                 }
                 else
                 {
-
-                    res += string.Join(", ", this.Values.Select(v => v == null ? "null" : v.GetJson(false)));
+                    res += Value.GetJson();
                 }
 
-                if (!isRoot && IsArray)
+                if (this.Index.HasValue)
                 {
                     res += "]";
                 }
 
                 if (!string.IsNullOrWhiteSpace(this.Name))
                 {
-                    res = res + "}";
-                }
-
-
-                if (isRoot && IsArray)
-                {
-                    res = res + "]";
+                    res += "}";
                 }
 
                 return res;
@@ -313,7 +276,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             public override string ToString()
             {
-                return string.Format("{0} - IsArray: {1}", this.Name, this.IsArray);
+                return string.Format("{0} - IsArray: {1}", this.Name, this.Index.HasValue);
             }
 
             #endregion Public Methods
