@@ -12,14 +12,6 @@ namespace GillSoft.ExpressionEvaluator
     public class JsonPath
     {
 
-        #region Public Events
-
-        public event EventHandler<JsonPropertyArgs> OnProperty;
-
-        public event EventHandler<JsonPropertyArgs> OnRootElement;
-
-        #endregion Public Events
-
         #region Public Methods
 
         public JsonPathParsedResult CreateJson(string jsonPath)
