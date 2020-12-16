@@ -70,6 +70,7 @@
     <Compile Include="FunctionArgs.cs" />
     <Compile Include="FunctionParameter.cs" />
     <Compile Include="Internals\JsonPathVisitor.cs" />
+    <Compile Include="Internals\StringBuilderPlus.cs" />
     <Compile Include="JsonPath.cs" />
     <Compile Include="JsonPathParsedResult.cs" />
     <Compile Include="JsonPropertyArgs.cs" />

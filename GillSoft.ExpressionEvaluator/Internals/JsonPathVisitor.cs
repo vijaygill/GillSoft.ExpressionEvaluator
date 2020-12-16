@@ -2,6 +2,7 @@
 using Antlr4.Runtime.Misc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,9 @@ using System.Threading.Tasks;
 
 namespace GillSoft.ExpressionEvaluator.Internals
 {
-    internal class JsonPathVisitor : JsonPathBaseVisitor<string>, IAntlrErrorListener<IToken>
+    internal class JsonPathVisitor : JsonPathBaseVisitor<string>,
+        IAntlrErrorListener<IToken>,
+        IAntlrErrorListener<int>
     {
 
         #region Private Fields
@@ -32,7 +35,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
         #region Public Methods
 
-        public static JsonPathParsedResult CreateJson(string jsonPath)
+        public static JsonPathParsedResult CreateJson(string jsonPath, bool formatted)
         {
             var rootObject = default(JsonPathElement);
 
@@ -56,42 +59,18 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             jsonPathImpl.Parse(jsonPath);
 
-            var json = rootObject.GetJson();
+            var json = rootObject.GetJson(formatted);
             var res = new JsonPathParsedResult(json, rootObject.Index.HasValue);
             return res;
         }
 
-        public void Parse(string jsonPath)
-        {
-            var inputStream = new AntlrInputStream(jsonPath);
-            var lexer = new JsonPathLexer(inputStream);
-            var tokenStream = new CommonTokenStream(lexer);
-            var parser = new JsonPathParser(tokenStream);
-
-            parser.RemoveErrorListeners();
-
-            var tree = parser.jsonpath();
-
-            var visitor = new JsonPathVisitor(
-                (e) => this.InvokeHandler(this.onRootElement, e),
-                (e) => this.InvokeHandler(this.onProperty, e));
-
-            parser.AddErrorListener(visitor);
-
-            visitor.Visit(tree);
-        }
-
-        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
-        {
-            throw ExtensionMethods.CreateException(offendingSymbol, msg);
-        }
-
         public override string VisitArrayIndex([NotNull] JsonPathParser.ArrayIndexContext context)
         {
-            var res = context.index.GetTextSafely();
+            var res = GetArrayIndex(context.GetTextSafely());
             return res;
         }
 
+       
         public override string VisitProperty([NotNull] JsonPathParser.PropertyContext context)
         {
             var propertyName = context.propertyWithDot != null
@@ -99,25 +78,28 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 : context.propertyInBrackets != null
                 ? GetPropertyWithBracketsName(context.propertyInBrackets.GetTextSafely())
                 : string.Empty;
-
-            try
+            if (!string.IsNullOrWhiteSpace(propertyName))
             {
-                var index = context.index != null
-                    ? this.VisitArrayIndex(context.index).ToInt()
-                    : default(int?);
-
-                var handler = onProperty;
-                if (handler != null)
+                try
                 {
-                    var e = new JsonPropertyArgs(propertyName, index);
-                    handler(e);
+                    var index = context.index != null
+                        ? this.VisitArrayIndex(context.index).ToInt()
+                        : default(int?);
+
+                    var handler = onProperty;
+                    if (handler != null)
+                    {
+                        var e = new JsonPropertyArgs(propertyName, index);
+                        handler(e);
+                    }
+                    return propertyName;
                 }
-                return propertyName;
+                catch
+                {
+                    throw ExtensionMethods.CreateException(propertyName, "While handling property.");
+                }
             }
-            catch
-            {
-                throw ExtensionMethods.CreateException(propertyName, "While handling property.");
-            }
+            return base.VisitProperty(context);
         }
 
         public override string VisitRootItem([NotNull] JsonPathParser.RootItemContext context)
@@ -144,11 +126,55 @@ namespace GillSoft.ExpressionEvaluator.Internals
             }
         }
 
+        void IAntlrErrorListener<IToken>.SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+        {
+            throw ExtensionMethods.CreateException(offendingSymbol, msg);
+        }
+        void IAntlrErrorListener<int>.SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+        {
+            var message = string.Format("Error at Line {0} Position {1}: {2}", line, charPositionInLine, msg);
+            throw ExtensionMethods.CreateException("Input string", message);
+        }
+
         #endregion Public Methods
 
         #region Private Methods
 
-        private string GetPropertyWithBracketsName(string name)
+        private string GetArrayIndex(string text)
+        {
+            var stringsToRemoveInBeginning = new[]
+            {
+                @"["
+            };
+            var stringsToRemoveInEnd = new[]
+            {
+                @"]"
+            };
+
+            var res = text;
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                foreach (var item in stringsToRemoveInBeginning)
+                {
+                    if (text.StartsWith(item))
+                    {
+                        text = text.Substring(item.Length);
+                    }
+                }
+                foreach (var item in stringsToRemoveInEnd)
+                {
+                    if (text.EndsWith(item))
+                    {
+                        text = text.Substring(0, text.Length - item.Length);
+                    }
+                }
+                res = text;
+            }
+            return res;
+        }
+
+        private string GetPropertyWithBracketsName(string text)
         {
             var stringsToRemoveInBeginning = new[]
             {
@@ -159,49 +185,68 @@ namespace GillSoft.ExpressionEvaluator.Internals
                 @"']"
             };
 
-            var res = name;
+            var res = text;
 
-            if (!string.IsNullOrWhiteSpace(name))
+            if (!string.IsNullOrWhiteSpace(text))
             {
                 foreach (var item in stringsToRemoveInBeginning)
                 {
-                    if (name.StartsWith(item))
+                    if (text.StartsWith(item))
                     {
-                        name = name.Substring(item.Length);
+                        text = text.Substring(item.Length);
                     }
                 }
                 foreach (var item in stringsToRemoveInEnd)
                 {
-                    if (name.EndsWith(item))
+                    if (text.EndsWith(item))
                     {
-                        name = name.Substring(0, name.Length - item.Length);
+                        text = text.Substring(0, text.Length - item.Length);
                     }
                 }
-                res = name;
+                res = text;
             }
             return res;
         }
 
-        private string GetPropertyWithDotName(string name)
+        private string GetPropertyWithDotName(string text)
         {
             var stringsToRemoveInBeginning = new[]
             {
                 @"."
             };
-            var res = name;
+            var res = text;
 
-            if (!string.IsNullOrWhiteSpace(name))
+            if (!string.IsNullOrWhiteSpace(text))
             {
                 foreach (var item in stringsToRemoveInBeginning)
                 {
-                    if (name.StartsWith(item))
+                    if (text.StartsWith(item))
                     {
-                        name = name.Substring(item.Length);
+                        text = text.Substring(item.Length);
                     }
                 }
-                res = name;
+                res = text;
             }
             return res;
+        }
+
+        private void Parse(string jsonPath)
+        {
+            var inputStream = new AntlrInputStream(jsonPath);
+            var lexer = new JsonPathLexer(inputStream);
+            var tokenStream = new CommonTokenStream(lexer);
+            var parser = new JsonPathParser(tokenStream);
+
+            var visitor = new JsonPathVisitor(this.onRootElement, this.onProperty);
+
+            lexer.RemoveErrorListeners();
+            lexer.AddErrorListener(visitor);
+
+            parser.RemoveErrorListeners();
+            parser.AddErrorListener(visitor);
+
+            var tree = parser.jsonpath();
+            visitor.Visit(tree);
         }
 
         #endregion Private Methods
@@ -232,44 +277,13 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             #region Public Methods
 
-            public string GetJson()
+            public string GetJson(bool formatted)
             {
-                var res = string.Empty;
+                var sb = new StringBuilderPlus(formatted, 0);
 
-                if (!string.IsNullOrWhiteSpace(this.Name))
-                {
-                    res += "{";
-                    res += "\"" + this.Name + "\":";
-                }
+                this.AppendJson(sb);
 
-                if (this.Index.HasValue)
-                {
-                    res += "[";
-                    if (Index.Value > 0)
-                    {
-                        res += string.Join(", ", Enumerable.Range(0, this.Index.Value).Select(x => "null"))
-                            + ",";
-                    }
-                }
-
-                if (Value == null)
-                {
-                    res += "null";
-                }
-                else
-                {
-                    res += Value.GetJson();
-                }
-
-                if (this.Index.HasValue)
-                {
-                    res += "]";
-                }
-
-                if (!string.IsNullOrWhiteSpace(this.Name))
-                {
-                    res += "}";
-                }
+                var res = sb.ToString().Trim();
 
                 return res;
             }
@@ -280,6 +294,58 @@ namespace GillSoft.ExpressionEvaluator.Internals
             }
 
             #endregion Public Methods
+
+            #region Private Methods
+
+            private void AppendJson(StringBuilderPlus stringBuilder)
+            {
+                if (!string.IsNullOrWhiteSpace(this.Name))
+                {
+                    stringBuilder.Append("\"" + this.Name + "\": ");
+                }
+
+                if (Index.HasValue)
+                {
+                    stringBuilder.AppendLine("[");
+                }
+
+                if (Index.HasValue)
+                {
+                    using (stringBuilder.BeginIndent())
+                    {
+                        for (var i = 0; i < Index.Value; i++)
+                        {
+                            stringBuilder.AppendLine("null,");
+                        }
+                    }
+                }
+                if (Value != null)
+                {
+                    using (var level = (Index.HasValue ? stringBuilder.BeginIndent() : stringBuilder.BeginNoIndent()))
+                    {
+                        stringBuilder.AppendLine("{");
+                        using (stringBuilder.BeginIndent())
+                        {
+                            Value.AppendJson(stringBuilder);
+                        }
+                        stringBuilder.AppendLine("}");
+                    }
+                }
+                else
+                {
+                    using (var level = (Index.HasValue ? stringBuilder.BeginIndent() : stringBuilder.BeginNoIndent()))
+                    {
+                        stringBuilder.AppendLine("null");
+                    }
+                }
+
+                if (Index.HasValue)
+                {
+                    stringBuilder.AppendLine("]");
+                }
+            }
+
+            #endregion Private Methods
 
         }
 

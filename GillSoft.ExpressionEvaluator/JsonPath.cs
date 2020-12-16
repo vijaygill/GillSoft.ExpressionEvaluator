@@ -14,9 +14,9 @@ namespace GillSoft.ExpressionEvaluator
 
         #region Public Methods
 
-        public JsonPathParsedResult CreateJson(string jsonPath)
+        public JsonPathParsedResult CreateJson(string jsonPath, bool formatted)
         {
-            var res = JsonPathVisitor.CreateJson(jsonPath);
+            var res = JsonPathVisitor.CreateJson(jsonPath, formatted);
             return res;
         }
 

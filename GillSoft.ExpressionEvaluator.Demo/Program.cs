@@ -101,17 +101,19 @@ namespace GillSoft.ExpressionEvaluator.Demo
                 try
                 {
                     var jsonPath = new JsonPath();
-                    var jsonResult = jsonPath.CreateJson(line);
+                    var jsonResult = jsonPath.CreateJson(line, true);
                     Console.WriteLine("JsonPath: {0}", line);
-                    Console.WriteLine("Json    : {0}", jsonResult.Json);
+                    Console.WriteLine("Json formatted ******************************************");
+                    Console.WriteLine(jsonResult.Json);
+                    Console.WriteLine("Json formatted ******************************************");
                     JContainer obj = jsonResult.IsTopLevelArray ? JArray.Parse(jsonResult.Json) as JContainer : JObject.Parse(jsonResult.Json) as JContainer;
                     foreach (var item in obj.SelectTokens(line))
                     {
                         item.Replace("apples");
                     }
-                    Console.WriteLine("Json formatted ******************************************");
+                    Console.WriteLine("Json parsed *********************************************");
                     Console.WriteLine(obj.ToString(Newtonsoft.Json.Formatting.Indented));
-                    Console.WriteLine("Json formatted ******************************************");
+                    Console.WriteLine("Json parsed *********************************************");
                     Console.WriteLine();
                 }
                 catch (Exception ex)
