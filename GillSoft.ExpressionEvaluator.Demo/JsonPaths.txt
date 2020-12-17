@@ -1,5 +1,7 @@
 ﻿$.store.book.title
+$.['store'].['book'].['title']
 $['store']['book']['title']
+$['store'].['book'].title
 $['store']['book'][0]['title']
 $['store'][1]['location'][2]['book'][0]['title']
 $[2]['store'][1]['location'][2]['book'][0]['title']
@@ -13,4 +15,6 @@ $.CorsOrigin.['some.property.with.dot'][1].Name
 $.CorsOrigin.['some.property.with.dot'][2]
 $.CorsOrigin.['some.property.with.dot'][2].Name
 $['store:1'][1]['location_1'][2]['book#1'][0]['title-1']
-$['store:1'][1]['location_1'][2]['book#1'][0]['title-1'].['abc/def']
+$['store:1'][1]['location_1'][2]['book#1'][0]['title-1'].['abc/def>']
+$[0]
+$[3]

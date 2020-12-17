@@ -10,14 +10,13 @@ using System.Threading.Tasks;
 
 namespace GillSoft.ExpressionEvaluator.Internals
 {
-    internal class JsonPathVisitor : JsonPathBaseVisitor<string>,
-        IAntlrErrorListener<IToken>,
-        IAntlrErrorListener<int>
+    internal class JsonPathVisitor : JsonPathBaseVisitor<string>
     {
 
         #region Private Fields
 
         private readonly Action<JsonPropertyArgs> onProperty;
+
         private readonly Action<JsonPropertyArgs> onRootElement;
 
         #endregion Private Fields
@@ -70,14 +69,9 @@ namespace GillSoft.ExpressionEvaluator.Internals
             return res;
         }
 
-       
         public override string VisitProperty([NotNull] JsonPathParser.PropertyContext context)
         {
-            var propertyName = context.propertyWithDot != null
-                ? GetPropertyWithDotName(context.propertyWithDot.GetTextSafely())
-                : context.propertyInBrackets != null
-                ? GetPropertyWithBracketsName(context.propertyInBrackets.GetTextSafely())
-                : string.Empty;
+            var propertyName = VisitPropertyType(context.prop);
             if (!string.IsNullOrWhiteSpace(propertyName))
             {
                 try
@@ -102,8 +96,42 @@ namespace GillSoft.ExpressionEvaluator.Internals
             return base.VisitProperty(context);
         }
 
+        public override string VisitPropertyType([NotNull] JsonPathParser.PropertyTypeContext context)
+        {
+            var propertyName = context.propertyWithDotAndBracket != null
+                            ? VisitPropertyWithDotAndBracketRule(context.propertyWithDotAndBracket)
+                            : context.propertyWithDot != null
+                            ? VisitPropertyWithDotRule(context.propertyWithDot)
+                            : context.propertyWithBrackets != null
+                            ? VisitPropertyWithBracketsRule(context.propertyWithBrackets)
+                            : string.Empty;
+            return propertyName;
+        }
+
+        public override string VisitPropertyWithBracketsRule([NotNull] JsonPathParser.PropertyWithBracketsRuleContext context)
+        {
+            var propertyName = context.GetTextSafely();
+            var res = GetPropertyWithBracketsName(propertyName);
+            return res;
+        }
+
+        public override string VisitPropertyWithDotAndBracketRule([NotNull] JsonPathParser.PropertyWithDotAndBracketRuleContext context)
+        {
+            var propertyName = context.GetTextSafely();
+            var res = GetPropertyWithDotAndBracketsName(propertyName);
+            return res;
+        }
+
+        public override string VisitPropertyWithDotRule([NotNull] JsonPathParser.PropertyWithDotRuleContext context)
+        {
+            var propertyName = context.GetTextSafely();
+            var res = GetPropertyWithDotName(propertyName);
+            return res;
+        }
+
         public override string VisitRootItem([NotNull] JsonPathParser.RootItemContext context)
         {
+            var x = context.GetTextSafely();
             var propertyName = string.Empty;
 
             try
@@ -124,16 +152,6 @@ namespace GillSoft.ExpressionEvaluator.Internals
             {
                 throw ExtensionMethods.CreateException(propertyName, "While handling root item.");
             }
-        }
-
-        void IAntlrErrorListener<IToken>.SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
-        {
-            throw ExtensionMethods.CreateException(offendingSymbol, msg);
-        }
-        void IAntlrErrorListener<int>.SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
-        {
-            var message = string.Format("Error at Line {0} Position {1}: {2}", line, charPositionInLine, msg);
-            throw ExtensionMethods.CreateException("Input string", message);
         }
 
         #endregion Public Methods
@@ -208,6 +226,40 @@ namespace GillSoft.ExpressionEvaluator.Internals
             return res;
         }
 
+        private string GetPropertyWithDotAndBracketsName(string text)
+        {
+            var stringsToRemoveInBeginning = new[]
+            {
+                @".['"
+            };
+            var stringsToRemoveInEnd = new[]
+            {
+                @"']"
+            };
+
+            var res = text;
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                foreach (var item in stringsToRemoveInBeginning)
+                {
+                    if (text.StartsWith(item))
+                    {
+                        text = text.Substring(item.Length);
+                    }
+                }
+                foreach (var item in stringsToRemoveInEnd)
+                {
+                    if (text.EndsWith(item))
+                    {
+                        text = text.Substring(0, text.Length - item.Length);
+                    }
+                }
+                res = text;
+            }
+            return res;
+        }
+
         private string GetPropertyWithDotName(string text)
         {
             var stringsToRemoveInBeginning = new[]
@@ -239,19 +291,57 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
             var visitor = new JsonPathVisitor(this.onRootElement, this.onProperty);
 
+            var errorHandler = new ErrorHandler(jsonPath);
+
             lexer.RemoveErrorListeners();
-            lexer.AddErrorListener(visitor);
+            lexer.AddErrorListener(errorHandler);
 
             parser.RemoveErrorListeners();
-            parser.AddErrorListener(visitor);
+            parser.AddErrorListener(errorHandler);
 
             var tree = parser.jsonpath();
+            var x2 = tree.ToStringTree(parser);
+            //Console.WriteLine("*** {0}", x2);
             visitor.Visit(tree);
         }
 
         #endregion Private Methods
 
         #region Private Classes
+
+        private class ErrorHandler : IAntlrErrorListener<IToken>, IAntlrErrorListener<int>
+        {
+            #region Private Fields
+
+            private readonly string input;
+
+            #endregion Private Fields
+
+            #region Public Constructors
+
+            public ErrorHandler(string input)
+            {
+                this.input = input;
+            }
+
+            #endregion Public Constructors
+
+            #region Public Methods
+
+            void IAntlrErrorListener<IToken>.SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+            {
+                throw ExtensionMethods.CreateException(offendingSymbol, msg);
+            }
+
+            void IAntlrErrorListener<int>.SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+            {
+                var message = string.Format("Error at Line {0} Position {1}: {2}", line, charPositionInLine, msg);
+                throw ExtensionMethods.CreateException(input, message);
+            }
+
+            #endregion Public Methods
+
+        }
 
         private class JsonPathElement
         {

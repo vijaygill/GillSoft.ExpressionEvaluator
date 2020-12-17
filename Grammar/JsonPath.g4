@@ -1,23 +1,33 @@
 grammar JsonPath;
 
-jsonpath : rootItem property+;
-
-arrayIndex : '[' index = INT ']';
+jsonpath : rootItem property*;
 
 rootItem : DOLLAR (index = arrayIndex?);
 
-property : (propertyInBrackets = PROPERTY_IN_BRACKETS | propertyWithDot = PROPERTY_WITH_DOT) (index = arrayIndex?);
+property : (prop = propertyType) (index = arrayIndex?);
 
-PROPERTY_IN_BRACKETS : (BRACKET_SQ_L QUOTE_S) ( ~( '"' | '\'' | '[' | ']')*) (QUOTE_S BRACKET_SQ_R);
-PROPERTY_WITH_DOT : DOT ( ~( '.' | '"' | '\'' | '[' | ']')*);
+propertyType: (propertyWithBrackets = propertyWithBracketsRule)
+    | (propertyWithDot = propertyWithDotRule)
+    | (propertyWithDotAndBracket = propertyWithDotAndBracketRule)
+    ;
 
-INDENTIFIER  : [a-zA-Z] ~( '.' | '"' | '\'' | '[' | ']')*;
-INT          : [0-9]+;
-BRACKET_SQ_L : '[';
-BRACKET_SQ_R : ']';
-QUOTE_S      : '\'';
-DOT          : '.';
-DOLLAR       : '$';
-HYPHEN       : '-';
-COLON        : ':';
-WS           : [ \t\n\r]+ -> skip;
+propertyWithDotAndBracketRule : ID_WITH_DOT_BRACKET;
+propertyWithBracketsRule      : ID_WITH_BRACKET;
+propertyWithDotRule           : ID_WITHOUT_DOT;
+
+arrayIndex : BRACKET_SQ_L index = INT BRACKET_SQ_R;
+
+fragment DOT_BRACKET_START : '.[\'';
+fragment BRACKET_START     : '[\'';
+fragment BRACKET_END       : '\']';
+fragment DOT               : '.';
+fragment ID                : ~('$' | '[' | ']' | '.' | '\'')+;
+
+INT                 : [0-9]+;
+ID_WITH_DOT_BRACKET : DOT_BRACKET_START ID (DOT ID)* BRACKET_END;
+ID_WITH_BRACKET     : BRACKET_START ID (DOT ID)* BRACKET_END;
+ID_WITHOUT_DOT      : DOT ID;
+BRACKET_SQ_L        : '[';
+BRACKET_SQ_R        : ']';
+DOLLAR              : '$';
+WS                  : [ \t\n\r]+ -> skip;
