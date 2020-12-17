@@ -309,6 +309,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
 
         private class ErrorHandler : IAntlrErrorListener<IToken>, IAntlrErrorListener<int>
         {
+
             #region Private Fields
 
             private readonly string input;
@@ -359,6 +360,7 @@ namespace GillSoft.ExpressionEvaluator.Internals
             public int? Index { get; private set; }
 
             public string Name { get; private set; }
+            
             public JsonPathElement Value { get; set; }
 
             #endregion Public Properties
