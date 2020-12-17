@@ -300,8 +300,6 @@ namespace GillSoft.ExpressionEvaluator.Internals
             parser.AddErrorListener(errorHandler);
 
             var tree = parser.jsonpath();
-            var x2 = tree.ToStringTree(parser);
-            //Console.WriteLine("*** {0}", x2);
             visitor.Visit(tree);
         }
 
